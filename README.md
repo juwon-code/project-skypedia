@@ -1,6 +1,6 @@
 ## project-skypedia
 
-데브코스 최종 프로젝트 9팀 `Inte11i9ence`의 백엔드 레포지토리 입니다.
+데브코스 최종 프로젝트 9팀 `Inte11i9ence`에서 진행한 `스카이피디아(Skypedia)`의 개인 작업을 위한 백엔드 레포지토리 입니다.
 
 ### 프로젝트 소개
 
@@ -12,7 +12,16 @@
 공유해보자! 라는 의도로 `여행 관련된 모든 정보를 공유하는 커뮤니티` 프로젝트를 기획하게 되었습니다.
 회원들은 본 플랫폼을 통해 신뢰할 수 있는 여행 정보를 제공받고, 공유할 수 있습니다.
 
-현재 구상하고 있는 기능들은 다음과 같습니다.
+본 레포지토리에서 수행할 작업에는 여러가지 개선사항이 존재하며, 세부사항은 아래와 같습니다.
+
+- AWS에서 GCP로 클라우드 교체.
+- 관리자 권한 추가 및 전용 기능 추가.
+- 엘라스틱 서치(Elastic Search) 검색 엔진 적용.
+- 테스트 자동화를 위한 테스트 코드 작성.
+- 프로젝트 리팩토링 및 DB 구조 개선.
+
+#### 설치 및 설정법
+<i>※ 추후 세부적인 설정법을 제공할 생각입니다.</i>
 
 #### 주요 기능
 - 여행에 대해 소통 및 리뷰할 수 있는 `지역별 게시판`
@@ -41,14 +50,15 @@
   <img src="https://img.shields.io/badge/Spring Boot-6DB33F?style=for-the-badge&logo=SpringBoot&logoColor=white">
   <img src="https://img.shields.io/badge/Spring Security-6DB33F?style=for-the-badge&logo=SpringSecurity&logoColor=white">
   <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=MySQL&logoColor=white">
+  <img src="https://img.shields.io/badge/Redis-FF4438?style=for-the-badge&logo=Redis&logoColor=white">
+  <img src="https://img.shields.io/badge/ElasticSearch-005571?style=for-the-badge&logo=ElasticSearch&logoColor=white">
 </p>
 
 - 클라우드 서비스
 
 <p>
-  <img src="https://img.shields.io/badge/AWS EC2-FF9900?style=for-the-badge&logo=AmazonEC2&logoColor=white">
-  <img src="https://img.shields.io/badge/AWS S3-569A31?style=for-the-badge&logo=AmazonS3&logoColor=white">
-  <img src="https://img.shields.io/badge/AWS RDS-527FFF?style=for-the-badge&logo=AmazonRDS&logoColor=white">
+  <img src="https://img.shields.io/badge/Google Cloud-4285F4?style=for-the-badge&logo=GoogleCloud&logoColor=white">
+  <img src="https://img.shields.io/badge/Google Cloud Storage-AECBFA?style=for-the-badge&logo=GoogleCloudStorage&logoColor=white">
 </p>
 
 - CI / CD
@@ -72,7 +82,7 @@
 |박주원|유정현|이수호|이정우|
 
 ### 관련 링크
-
+- [백엔드 레포지토리](https://github.com/prgrms-web-devcourse-final-project/WEB1_2_Inte11i9ence_BE)
 - [프론트엔드 레포지토리](https://github.com/prgrms-web-devcourse-final-project/WEB1_2_Inte11i9ence_FE)
 - [코드 및 커밋 컨벤션](https://www.notion.so/prgrms/13d3e47046bf813b9c11e5e10e9eece0)
 - [ERD 다이어그램](https://www.erdcloud.com/d/GZLauycv4RTaJXGdR)
