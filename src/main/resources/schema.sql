@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS member
 (
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     oauth_id      VARCHAR(255)       NOT NULL,
+    name          VARCHAR(255)       NOT NULL,
     username      VARCHAR(20) UNIQUE NOT NULL,
     email         VARCHAR(50)        NOT NULL,
     role          VARCHAR(20)        NOT NULL DEFAULT 'ROLE_USER',
@@ -24,9 +25,10 @@ CREATE TABLE IF NOT EXISTS notify
     content     VARCHAR(255) NOT NULL,
     notify_type VARCHAR(20)  NOT NULL,
     uri         VARCHAR(255) NOT NULL,
+    viewed      TINYINT(1)   NOT NULL DEFAULT '0',
     sent_at     TIMESTAMP    NOT NULL,
-    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_at  TIMESTAMP             DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CHECK (notify_type IN ('REPLY', 'CHAT', 'NOTICE')),
     FOREIGN KEY (member_id) REFERENCES member (id)
 );
@@ -74,8 +76,8 @@ CREATE TABLE IF NOT EXISTS post
 
 CREATE TABLE IF NOT EXISTS region
 (
-    id   BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    regionName VARCHAR(50) UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS plan_group
@@ -100,9 +102,9 @@ CREATE TABLE IF NOT EXISTS plan_detail
     id            BIGINT AUTO_INCREMENT PRIMARY KEY,
     plan_group_id BIGINT       NOT NULL,
     location      VARCHAR(255) NOT NULL,
+    place_id      VARCHAR(100) NOT NULL UNIQUE,
     content       VARCHAR(255) NULL,
-    latitude      DOUBLE       NOT NULL,
-    longitude     DOUBLE       NOT NULL,
+    coordinates   GEOMETRY     NOT NULL,
     views         BIGINT       NOT NULL DEFAULT '0',
     likes         BIGINT       NOT NULL DEFAULT '0',
     deleted       TINYINT(1)   NOT NULL DEFAULT '0',
@@ -110,7 +112,7 @@ CREATE TABLE IF NOT EXISTS plan_detail
     updated_at    TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at    TIMESTAMP    NULL,
     FOREIGN KEY (plan_group_id) REFERENCES plan_group (id),
-    INDEX idx_plan_detail_location (latitude, longitude)
+    SPATIAL INDEX idx_plan_detail_coordinates (coordinates)
 );
 
 CREATE TABLE IF NOT EXISTS reply
@@ -198,4 +200,72 @@ CREATE TABLE IF NOT EXISTS plan_group_likes
     PRIMARY KEY (plan_group_id, member_id),
     FOREIGN KEY (plan_group_id) REFERENCES post (id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+);
+
+
+CREATE TABLE IF NOT EXISTS `chat_room`
+(
+    `id`                     bigint       NOT NULL AUTO_INCREMENT,
+    `created_at`             datetime(6)  NOT NULL,
+    `creator_id`             bigint       NOT NULL,
+    `is_creator_blocked`     bit(1)       NOT NULL,
+    `is_creator_left`        bit(1)       NOT NULL,
+    `is_participant_blocked` bit(1)       NOT NULL,
+    `is_participant_left`    bit(1)       NOT NULL,
+    `participant_id`         bigint       NOT NULL,
+    `status`                 varchar(255) NOT NULL,
+    `updated_at`             datetime(6)  NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `FKqe4n7vg39yjglbqx2gdbj0f8f` (`creator_id`),
+    KEY `FKj2d4x1n7hgb6uxkrm7bx0x7u1` (`participant_id`),
+    CONSTRAINT `FKj2d4x1n7hgb6uxkrm7bx0x7u1` FOREIGN KEY (`participant_id`) REFERENCES `member` (`id`),
+    CONSTRAINT `FKqe4n7vg39yjglbqx2gdbj0f8f` FOREIGN KEY (`creator_id`) REFERENCES `member` (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS `chat_message`
+(
+    `id`           bigint       NOT NULL AUTO_INCREMENT,
+    `content`      varchar(255) NOT NULL,
+    `created_at`   datetime(6)  NOT NULL,
+    `read_at`      datetime(6) DEFAULT NULL,
+    `sender_id`    bigint       NOT NULL,
+    `status`       varchar(255) NOT NULL,
+    `chat_room_id` bigint       NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `FKc8p1hhbh0jkq9yj4bxdh4fgty` (`chat_room_id`),
+    KEY `FKmhgucpbdwb4b4l4h91fg0x7a8` (`sender_id`),
+    CONSTRAINT `FKc8p1hhbh0jkq9yj4bxdh4fgty` FOREIGN KEY (`chat_room_id`) REFERENCES `chat_room` (`id`),
+    CONSTRAINT `FKmhgucpbdwb4b4l4h91fg0x7a8` FOREIGN KEY (`sender_id`) REFERENCES `member` (`id`)
+);
+
+CREATE TABLE IF NOT EXISTS select_post (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    member_id BIGINT NOT NULL,
+    content VARCHAR(1000),
+    deleted TINYINT(1) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL,
+    FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
+ );
+
+CREATE TABLE IF NOT EXISTS select_post_photo (
+    post_id BIGINT NOT NULL,
+    photo_id BIGINT NOT NULL,
+    category VARCHAR(2) NOT NULL,
+    likes BIGINT NOT NULL DEFAULT 0,
+    PRIMARY KEY (post_id, photo_id),
+    FOREIGN KEY (post_id) REFERENCES select_post (id) ON DELETE CASCADE,
+    FOREIGN KEY (photo_id) REFERENCES photo (id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS refresh_token
+(
+    member_id   BIGINT       NOT NULL,
+    token       VARCHAR(255) NOT NULL UNIQUE,
+    expiry_date TIMESTAMP    NOT NULL,
+    created_at  TIMESTAMP    NOT NULL,
+    updated_at  TIMESTAMP    NOT NULL,
+    PRIMARY KEY (member_id),
+    FOREIGN KEY (member_id) REFERENCES member (id)
 );

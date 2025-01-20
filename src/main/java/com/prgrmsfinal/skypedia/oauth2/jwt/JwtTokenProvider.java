@@ -56,6 +56,7 @@ public class JwtTokenProvider {
     public String createRefreshToken(Member member) {
         Claims claims = Jwts.claims()
                 .add("id", member.getId())
+                .add("role", member.getRole().name())
                 .build();
 
         return createToken(claims, refreshTokenValidityInSeconds);

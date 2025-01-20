@@ -13,11 +13,12 @@ public class NotifyMapper {
 
 	public static NotifyResponseDTO.Send toDTO(Notify notify) {
 		return NotifyResponseDTO.Send.builder()
+			.id(notify.getId())
 			.content(notify.getContent())
 			.type(notify.getNotifyType().getName())
 			.sentAt(notify.getSentAt())
 			.uri(notify.getUri())
-			.read(notify.isRead())
+			.viewed(notify.isViewed())
 			.build();
 	}
 
@@ -28,7 +29,7 @@ public class NotifyMapper {
 			.content(dto.getContent())
 			.sentAt(dto.getSentAt())
 			.uri(dto.getUri())
-			.read(false)
+			.viewed(false)
 			.build();
 	}
 
@@ -39,7 +40,7 @@ public class NotifyMapper {
 			.content(dto.getContent())
 			.sentAt(dto.getSentAt())
 			.uri(dto.getUri())
-			.read(false)
+			.viewed(false)
 			.build();
 	}
 
@@ -49,7 +50,7 @@ public class NotifyMapper {
 			.type(dto.getNotifyType().getName())
 			.sentAt(dto.getSentAt())
 			.uri(dto.getUri())
-			.read(false)
+			.viewed(false)
 			.build();
 	}
 
@@ -59,7 +60,7 @@ public class NotifyMapper {
 			.type(dto.getNotifyType().getName())
 			.sentAt(dto.getSentAt())
 			.uri(dto.getUri())
-			.read(false)
+			.viewed(false)
 			.build();
 	}
 }

@@ -4,17 +4,14 @@ import org.springframework.security.core.Authentication;
 
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.planShare.dto.PlanGroupRequestDTO;
-import com.prgrmsfinal.skypedia.post.dto.PostRequestDTO;
 import com.prgrmsfinal.skypedia.reply.dto.ReplyRequestDTO;
 import com.prgrmsfinal.skypedia.reply.dto.ReplyResponseDTO;
 import com.prgrmsfinal.skypedia.reply.entity.Reply;
 
 public interface ReplyService {
-	ReplyResponseDTO.ReadAll readAll(Authentication authentication, Long parentId, Long lastReplyId);
+	ReplyResponseDTO.ReadAll readAll(Authentication authentication, Long parentId, int page);
 
-	Reply create(PostRequestDTO.CreateReply request, Member member);
-
-	Reply create(PlanGroupRequestDTO.CreateReply groupCreateReply, Member member);
+	Reply create(ReplyRequestDTO.Create request);
 
 	void modify(Authentication authentication, Long replyId, ReplyRequestDTO.Modify request);
 
@@ -22,9 +19,13 @@ public interface ReplyService {
 
 	void restore(Authentication authentication, Long replyId);
 
-	ReplyResponseDTO.ToggleLikes toggleLikes(Authentication authentication, Long replyId);
+	ReplyResponseDTO.LikeStatus toggleLikes(Authentication authentication, Long replyId);
 
-	Long getLikes(Reply reply);
+	boolean getLiked(Long memberId, Long replyId);
 
-	boolean isCurrentMemberLiked(Authentication authentication, Reply reply);
+	Long getLikes(Long replyId);
+
+	boolean isCurrentMemberLiked(Authentication authentication, Reply result);
+
+	Reply create(PlanGroupRequestDTO.CreateReply groupCreateReply, Member member);
 }

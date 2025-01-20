@@ -9,10 +9,18 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Table(name = "post_photo")
 public class PostPhoto {
 
@@ -24,7 +32,7 @@ public class PostPhoto {
 	@JoinColumn(name = "post_id", nullable = false)
 	private Post post;
 
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.EAGER)
 	@MapsId("photoId")
 	@JoinColumn(name = "photo_id", nullable = false)
 	private Photo photo;
