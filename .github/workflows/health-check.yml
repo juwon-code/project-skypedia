@@ -11,13 +11,22 @@ jobs:
   healthcheck:
     runs-on: ubuntu-latest
     steps:
+      # 현재 시간 얻기
+      - name: Get current time
+        uses: josStorer/get-current-time@v2.1.2
+        id: current-datetime
+        with:
+          format: YYYY-MM-DDTHH:mm:ss
+          utcOffset: "+09:00"
+
       # 서버 온라인 상태 확인
       - name: Check Server Online
         uses: Jtalk/url-health-check-action@v4
         with:
           url: ${{ secrets.SERVER_URL }}
-          max-attempts: 3,
+          max-attempts: 3
           retry-delay: 10s
+
       # 슬랙 메시지 전송 (성공)
       - name: Send Slack Message on Success
         if: success()
@@ -27,8 +36,10 @@ jobs:
           text: |
             ✅ *서버 헬스 체크 성공*
             서버에 API 요청을 시도하였으며, 정상적으로 동작하는 것으로 확인됩니다.
+            작업 일시: ${{ steps.current-datetime.outputs.formattedTime }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
       # 슬랙 메시지 전송 (실패)
       - name: Send Slack Message on Failure
         if: failure()
@@ -39,5 +50,6 @@ jobs:
             🚨 *서버 헬스 체크 실패*
             서버에 API 요청을 3회 시도하였으나, 올바르게 동작하지 않습니다.
             관리자님께서는 원인을 파악하여 적절한 조치를 취해주세요.
+            작업 일시: ${{ steps.current-datetime.outputs.formattedTime }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
