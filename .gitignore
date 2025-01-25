@@ -82,6 +82,7 @@ fabric.properties
 
 ### Intellij Patch ###
 # Comment Reason: https://github.com/joeblau/gitignore.io/issues/186#issuecomment-215987721
+.idea
 
 # *.iml
 # modules.xml
@@ -245,9 +246,8 @@ gradle-app.setting
 # Java heap dump
 *.hprof
 
-# For Only Development!!!
-.idea
-application-dev.properties
+# Environment Variables
+.env
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,java,gradle,intellij,visualstudiocode
 
