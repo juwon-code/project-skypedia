@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Nginx proxy server
+  nginx:
+    image: nginx:1.27.3-alpine
+    container_name: proxy-server
+    ports:
+      - "80:80"
+    volumes:
+      - ./proxy/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - mysql-db
+      - redis-db
+      - app-server
+
+  # Application server
+  app:
+    image: ${DOCKER_IMAGE_PATH}:latest
+    container_name: app-server
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql-db
+      - redis-db
+    volumes:
+      - ./logs:/logs
+
+  # Redis DB
+  redis:
+    image: redis:7.4.2-alpine
+    container_name: redis-db
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: ${IMDB_PASSWORD}
+    command: ["redis-server", "--requirepass", "${IMDB_PASSWORD}"]
+
+  # Mysql DB
+  mysql:
+    image: mysql:8.0.39
+    container_name: mysql-db
+    ports:
+      - "3306:3306"
+    environment:
+      TZ: Asia/Seoul
+      MYSQL_DATABASE: ${RDB_SCHEMA_NAME}
+      MYSQL_ROOT_PASSWORD: ${RDB_ROOT_PASSWORD}
+      MYSQL_USER: ${RDB_USERNAME}
+      MYSQL_PASSWORD: ${RDB_PASSWORD}
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+
