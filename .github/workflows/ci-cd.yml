@@ -19,10 +19,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4.2.2
 
-      # 배포용 설정파일 생성
+      # 배포용 환경변수파일 생성
       - name: Create properties from secrets
         run: | 
-          echo "${{ secrets.PRODUCE_PROPERTIES }}" | base64 --decode > ./src/main/resources/application-prod.properties
+          echo "${{ secrets.PRODUCE_ENV }}" | base64 --decode > .env
 
       # JDK 17 설치
       - name: Setup Java Development Kit 17
@@ -58,34 +58,20 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      # 도커 허브 로그인
-      - name: Sign-in to DockerHub
-        uses: docker/login-action@v3.3.0
+      # SSH 접속 및 배포
+      - name: SSH to deploy
+        uses: appleboy/ssh-action@master
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # 도커 이미지 가져오기
-      - name: Pull Docker image
-        run: sudo docker pull ${{ secrets.APPLICATION_NAME }}
-
-      # 레디스 컨테이너 최신화
-      - name: Start Redis container
-        run: |
-          sudo docker stop redis_container || true
-          sudo docker rm redis_container || true
-          sudo docker run -d --name redis_container -p 6379:6379 redis:latest
-
-      # 프로젝트 컨테이너 최신화
-      - name: Start Project container
-        run: |
-          sudo docker stop ${{ secrets.APPLICATION_NAME }} || true
-          sudo docker rm ${{ secrets.APPLICATION_NAME }} || true
-          sudo docker run -d --name ${{ secrets.APPLICATION_NAME }} -p 8080:8080 ${{ env.DOCKER_IMAGE_PATH }}
-
-      # 도커 이미지 삭제
-      - name: Remove old Docker image
-        run: sudo docker image prune -a -f || true
+          host: ${{ secrets.GCP_HOST }}
+          username: ${{ secrets.GCP_USERNAME }}
+          key: ${{ secrets.GCP_KEY }}
+          port: ${{ secrets.GCP_SSH_PORT }}
+          script: |
+            sudo docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+            sudo docker rm -f $(sudo docker ps -qa)
+            sudo docker pull ${{ env.DOCKER_IMAGE_PATH }}
+            sudo docker-compose up -d
+            sudo docker image prune -f
 
   notification:
     needs: [ build, deploy ]
