@@ -33,16 +33,20 @@ CREATE TABLE IF NOT EXISTS notify
     FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
-CREATE TABLE IF NOT EXISTS photo
+CREATE TABLE IF NOT EXISTS image
 (
     id                BIGINT AUTO_INCREMENT PRIMARY KEY,
     uuid              VARCHAR(255)                        NOT NULL UNIQUE,
-    original_filename VARCHAR(255)                        NOT NULL,
-    content_type      VARCHAR(255)                        NULL,
-    s3_filekey        VARCHAR(255)                        NOT NULL UNIQUE,
+    filename          VARCHAR(255)                        NOT NULL,
+    extension         VARCHAR(255)                        NOT NULL,
+    post_type         VARCHAR(255)                        NOT NULL,
+    post_content_id   VARCHAR(255)                        NOT NULL,
     created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP
+    CHECK (post_type IN ('POST', 'SELECT_POST'))
 );
+
+CREATE SEQUENCE image_seq START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE IF NOT EXISTS post_category
 (
