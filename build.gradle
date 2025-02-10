@@ -33,7 +33,6 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    implementation 'software.amazon.awssdk:s3:2.20.45'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
 
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
@@ -58,6 +57,10 @@ dependencies {
     implementation 'org.locationtech.jts:jts-core:1.18.0'
     implementation 'org.postgresql:postgresql:42.5.0'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // GCP Starter Dependencies :: 구글 클라우드 스토리지 관련 라이브러리.
+    implementation 'org.springframework.cloud:spring-cloud-gcp-starter:1.2.8.RELEASE'
+    implementation 'org.springframework.cloud:spring-cloud-gcp-storage:1.2.8.RELEASE'
 }
 
 tasks.named('test') {

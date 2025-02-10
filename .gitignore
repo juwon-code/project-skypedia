@@ -248,5 +248,7 @@ gradle-app.setting
 # Environment Variables
 .env
 
-# End of https://www.toptal.com/developers/gitignore/api/windows,macos,java,gradle,intellij,visualstudiocode
+# Google Cloud Storage Credentials
+gcs-credentials.json
 
+# End of https://www.toptal.com/developers/gitignore/api/windows,macos,java,gradle,intellij,visualstudiocode
