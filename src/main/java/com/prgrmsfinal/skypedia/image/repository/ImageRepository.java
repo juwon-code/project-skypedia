@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.photo.repository;
+package com.prgrmsfinal.skypedia.image.repository;
 
 import java.util.List;
 
@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.prgrmsfinal.skypedia.photo.entity.Image;
-import com.prgrmsfinal.skypedia.photo.entity.PostType;
+import com.prgrmsfinal.skypedia.image.entity.Image;
+import com.prgrmsfinal.skypedia.image.entity.PostType;
 
 @Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {

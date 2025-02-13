@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.photo.entity;
+package com.prgrmsfinal.skypedia.image.entity;
 
 import java.time.LocalDateTime;
 

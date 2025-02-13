@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.photo.service;
+package com.prgrmsfinal.skypedia.image.service;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.google.cloud.storage.StorageException;
-import com.prgrmsfinal.skypedia.photo.dto.ImageRequestDTO;
-import com.prgrmsfinal.skypedia.photo.dto.ImageResponseDTO;
-import com.prgrmsfinal.skypedia.photo.entity.Image;
-import com.prgrmsfinal.skypedia.photo.repository.ImageRepository;
+import com.prgrmsfinal.skypedia.image.dto.ImageRequestDTO;
+import com.prgrmsfinal.skypedia.image.dto.ImageResponseDTO;
+import com.prgrmsfinal.skypedia.image.entity.Image;
+import com.prgrmsfinal.skypedia.image.repository.ImageRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

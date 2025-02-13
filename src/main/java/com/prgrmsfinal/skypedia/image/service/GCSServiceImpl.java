@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.photo.service;
+package com.prgrmsfinal.skypedia.image.service;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

@@ -1,9 +1,9 @@
-package com.prgrmsfinal.skypedia.photo.service;
+package com.prgrmsfinal.skypedia.image.service;
 
 import java.util.List;
 
-import com.prgrmsfinal.skypedia.photo.dto.ImageRequestDTO;
-import com.prgrmsfinal.skypedia.photo.dto.ImageResponseDTO;
+import com.prgrmsfinal.skypedia.image.dto.ImageRequestDTO;
+import com.prgrmsfinal.skypedia.image.dto.ImageResponseDTO;
 
 public interface ImageService {
 	List<ImageResponseDTO.Upload> uploadImages(List<ImageRequestDTO.Upload> uploadDatas);

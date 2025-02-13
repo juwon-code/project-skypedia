@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.photo.config;
+package com.prgrmsfinal.skypedia.image.config;
 
 import java.io.IOException;
 import java.io.InputStream;

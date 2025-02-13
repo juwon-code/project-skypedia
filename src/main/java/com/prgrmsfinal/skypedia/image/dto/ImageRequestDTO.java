@@ -1,6 +1,6 @@
-package com.prgrmsfinal.skypedia.photo.dto;
+package com.prgrmsfinal.skypedia.image.dto;
 
-import com.prgrmsfinal.skypedia.photo.entity.PostType;
+import com.prgrmsfinal.skypedia.image.entity.PostType;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;

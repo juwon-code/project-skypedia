@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.photo.dto;
+package com.prgrmsfinal.skypedia.image.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
