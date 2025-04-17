@@ -2,16 +2,15 @@ USE skypedia;
 
 CREATE TABLE IF NOT EXISTS member
 (
-    id                 BIGINT        AUTO_INCREMENT PRIMARY KEY,
-    oauth_id           VARCHAR(255)  UNIQUE NOT NULL,
-    name               VARCHAR(255)  NOT NULL,
-    username           VARCHAR(20)   UNIQUE NOT NULL,
-    email              VARCHAR(50)   UNIQUE NOT NULL,
-    profile_image_url  VARCHAR(255)  NULL,
-    withdrawn          TINYINT(1)    NOT NULL DEFAULT 0 CHECK (withdrawn IN (0, 1)),
-    created_at         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    updated_at         TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    withdrawn_at       TIMESTAMP     NULL,
+    id             BIGINT        AUTO_INCREMENT PRIMARY KEY,
+    oauth_id       VARCHAR(255)  UNIQUE NOT NULL,
+    name           VARCHAR(255)  NOT NULL,
+    username       VARCHAR(20)   UNIQUE NOT NULL,
+    email          VARCHAR(50)   UNIQUE NOT NULL,
+    withdrawn      TINYINT(1)    NOT NULL DEFAULT 0 CHECK (withdrawn IN (0, 1)),
+    registered_at  TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP     DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    withdrawn_at   TIMESTAMP     NULL,
     FULLTEXT INDEX f_idx_member_username (username)
 );
 
@@ -121,8 +120,8 @@ CREATE TABLE IF NOT EXISTS post
 CREATE TABLE IF NOT EXISTS post_metrics
 (
     post_id     BIGINT  NOT NULL PRIMARY KEY,
-    view_count  BIGINT  NOT NULL DEFAULT '0',
-    like_count  BIGINT  NOT NULL DEFAULT '0',
+    view_count  BIGINT  NOT NULL DEFAULT 0,
+    like_count  BIGINT  NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS post_scrap
@@ -205,7 +204,7 @@ CREATE TABLE IF NOT EXISTS plan_post
     city_id       BIGINT         NOT NULL,
     title         VARCHAR(50)    NOT NULL,
     summary       VARCHAR(255)   NOT NULL DEFAULT '',
-    total_rating  DECIMAL(3, 2)  NOT NULL DEFAULT '0.00' CHECK (total_rating BETWEEN 0.00 AND 5.00),
+    total_rating  DECIMAL(3, 2)  NOT NULL DEFAULT 0.00 CHECK (total_rating BETWEEN 0.00 AND 5.00),
     deleted       TINYINT(1)     NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1)),
     created_at    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -224,7 +223,7 @@ CREATE TABLE IF NOT EXISTS plan_post_item
     place_name       VARCHAR(255)   NOT NULL,
     description      VARCHAR(255)   NOT NULL DEFAULT '',
     coordinates      GEOMETRY       NOT NULL,
-    item_rating      DECIMAL(3, 2)  NOT NULL DEFAULT '0.00' CHECK (rating BETWEEN 0.00 AND 5.00),
+    item_rating      DECIMAL(3, 2)  NOT NULL DEFAULT 0.00 CHECK (rating BETWEEN 0.00 AND 5.00),
     deleted          TINYINT(1)     NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1)),
     written_at       TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
     updated_at       TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -256,8 +255,8 @@ CREATE TABLE IF NOT EXISTS plan_post_likes
 CREATE TABLE IF NOT EXISTS plan_post_metrics
 (
     plan_post_id  BIGINT  NOT NULL PRIMARY KEY,
-    view_count    BIGINT  NOT NULL DEFAULT '0',
-    like_count    BIGINT  NOT NULL DEFAULT '0'
+    view_count    BIGINT  NOT NULL DEFAULT 0,
+    like_count    BIGINT  NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS photo
@@ -331,7 +330,7 @@ CREATE TABLE IF NOT EXISTS photo_plan_post_item
 (
     photo_id                 BIGINT  NOT NULL,
     photo_plan_post_item_id  BIGINT  NOT NULL,
-    PRIMARY KEY (photo_id, photo_plan_post_id),
+    PRIMARY KEY (photo_id, photo_plan_post_item_id),
     FOREIGN KEY (photo_id) REFERENCES photo (id) ON DELETE CASCADE,
     FOREIGN KEY (photo_plan_post_item_id) REFERENCES plan_post_item (id) ON DELETE CASCADE
 );
@@ -376,7 +375,7 @@ CREATE TABLE IF NOT EXISTS reply
     replier_id       BIGINT        NOT NULL,
     parent_reply_id  BIGINT        NULL,
     content          VARCHAR(255)  NOT NULL DEFAULT '',
-    likes            BIGINT        NOT NULL DEFAULT '0',
+    likes            BIGINT        NOT NULL DEFAULT 0,
     deleted          TINYINT(1)    NOT NULL DEFAULT 0 CHECK (deleted IN (0, 1)),
     replied_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at       TIMESTAMP     NULL,
