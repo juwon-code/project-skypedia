@@ -2,58 +2,61 @@ package com.prgrmsfinal.skypedia.chat.entity;
 
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-@EntityListeners(AuditingEntityListener.class)
 @Entity
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class ChatMessage {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_room_id")
+    @ManyToOne(cascade = CascadeType.REMOVE)
+    @JoinColumn(name = "chat_room_id", referencedColumnName = "id", nullable = false)
     private ChatRoom chatRoom;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id")
-    private Member sender;
+    @ManyToOne
+    @JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
+    private Member member;
 
     @Column(nullable = false)
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    private MessageStatus status = MessageStatus.SENT;
+    @Column(nullable = false)
+    private boolean isPhoto;
 
-    private LocalDateTime readAt;
+    @Column(nullable = false)
+    private boolean removed;
 
-    @CreatedDate
-    @Column(updatable = false)
+    @Column(insertable = false, updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime removedAt;
+
     @Builder
-    public ChatMessage(ChatRoom chatRoom, Member sender, String content) {
+    public ChatMessage(ChatRoom chatRoom, Member member, String content, boolean isPhoto) {
         this.chatRoom = chatRoom;
-        this.sender = sender;
+        this.member = member;
         this.content = content;
+        this.isPhoto = isPhoto;
+        this.removed = false;
+        this.removedAt = null;
     }
 
-    public void markAsRead() {
-        if (this.status == MessageStatus.SENT) {
-            this.status = MessageStatus.READ;
-            this.readAt = LocalDateTime.now();
-        }
+    public void remove() {
+        this.removed = true;
+        this.removedAt = LocalDateTime.now();
     }
 
-    public void delete() {
-        this.status = MessageStatus.DELETED;
+    public void restore() {
+        this.removed = false;
+        this.removedAt = null;
     }
 }
