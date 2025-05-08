@@ -1,6 +1,6 @@
 package com.prgrmsfinal.skypedia.hashtag.entity;
 
-import com.prgrmsfinal.skypedia.hashtag.entity.key.HashtagPostId;
+import com.prgrmsfinal.skypedia.hashtag.entity.compositekey.HashtagPostId;
 import com.prgrmsfinal.skypedia.post.entity.Post;
 import jakarta.persistence.*;
 import lombok.AccessLevel;

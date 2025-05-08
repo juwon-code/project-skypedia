@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.hashtag.entity.key;
+package com.prgrmsfinal.skypedia.hashtag.entity.compositekey;
 
 import jakarta.persistence.Embeddable;
 import lombok.*;
@@ -10,8 +10,8 @@ import java.io.Serializable;
 @AllArgsConstructor
 @Getter
 @EqualsAndHashCode
-public class HashtagPostId implements Serializable {
+public class HashtagVotePostId implements Serializable {
     private Long hashtagId;
 
-    private Long postId;
+    private Long votePostId;
 }

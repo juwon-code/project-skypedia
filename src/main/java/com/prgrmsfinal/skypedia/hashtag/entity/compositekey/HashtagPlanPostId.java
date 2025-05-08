@@ -1,4 +1,4 @@
-package com.prgrmsfinal.skypedia.hashtag.entity.key;
+package com.prgrmsfinal.skypedia.hashtag.entity.compositekey;
 
 import jakarta.persistence.Embeddable;
 import lombok.*;

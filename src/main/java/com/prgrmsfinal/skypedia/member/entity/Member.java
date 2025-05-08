@@ -32,10 +32,10 @@ public class Member {
 	@Column(nullable = false)
 	private boolean removed;
 
-	@Column(insertable = false, updatable = false)
+	@Column(insertable = false, updatable = false, nullable = false)
 	private LocalDateTime createdAt;
 
-	@Column(insertable = false, updatable = false)
+	@Column(insertable = false, updatable = false, nullable = false)
 	private LocalDateTime updatedAt;
 
 	private LocalDateTime removedAt;
