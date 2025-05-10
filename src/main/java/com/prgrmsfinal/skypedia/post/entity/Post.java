@@ -30,8 +30,6 @@ public class Post {
 	@Column(nullable = false)
 	private boolean removed;
 
-	private Float rating;
-
 	@Column(nullable = false, insertable = false, updatable = false)
 	private LocalDateTime createdAt;
 
@@ -41,12 +39,11 @@ public class Post {
 	private LocalDateTime removedAt;
 
 	@Builder
-	public Post(Member member, PostCategory postCategory, String title, String content, Float rating) {
+	public Post(Member member, PostCategory postCategory, String title, String content) {
 		this.member = member;
 		this.postCategory = postCategory;
 		this.title = title;
 		this.content = content;
-		this.rating = rating;
 		this.removed = false;
 		this.removedAt = null;
 	}
