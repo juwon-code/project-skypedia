@@ -1,17 +1,13 @@
-package com.prgrmsfinal.skypedia.post.entity.key;
+package com.prgrmsfinal.skypedia.post.entity.compositekey;
 
 import java.io.Serializable;
-
 import jakarta.persistence.Embeddable;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Embeddable
-@Getter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Getter
 @EqualsAndHashCode
 public class PostLikesId implements Serializable {
 	private Long postId;
