@@ -1,41 +1,35 @@
 package com.prgrmsfinal.skypedia.reply.entity;
 
 import java.time.LocalDateTime;
-
 import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.reply.entity.key.ReplyLikesId;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.prgrmsfinal.skypedia.reply.entity.compositekey.ReplyLikesId;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class ReplyLikes {
 	@EmbeddedId
 	private ReplyLikesId id;
 
-	@ManyToOne
+	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("replyId")
-	@JoinColumn(name = "reply_id", referencedColumnName = "id")
+	@JoinColumn(name = "reply_id", referencedColumnName = "id", nullable = false)
 	private Reply reply;
 
 	@ManyToOne
 	@MapsId("memberId")
-	@JoinColumn(name = "member_id", referencedColumnName = "id")
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@Column(insertable = false, updatable = false)
-	private LocalDateTime likedAt;
+	@Column(insertable = false, updatable = false, nullable = false)
+	private LocalDateTime createdAt;
+
+	@Builder
+	public ReplyLikes(Reply reply, Member member) {
+		this.id = new ReplyLikesId(reply.getId(), member.getId());
+		this.reply = reply;
+		this.member = member;
+	}
 }
