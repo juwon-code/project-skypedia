@@ -22,12 +22,12 @@ public class PostMetrics {
     @Builder
     public PostMetrics(Long postId, Long viewCount, Long likeCount) {
         this.postId = postId;
-        this.viewCount = viewCount;
-        this.likeCount = likeCount;
+        this.viewCount = 0L;
+        this.likeCount = 0L;
     }
 
-    public void changeMetrics(Long viewCount, Long likeCount) {
-        this.viewCount = viewCount;
-        this.likeCount = likeCount;
+    public void refresh(Long viewCount, Long likeCount) {
+        this.viewCount += viewCount;
+        this.likeCount += likeCount;
     }
 }

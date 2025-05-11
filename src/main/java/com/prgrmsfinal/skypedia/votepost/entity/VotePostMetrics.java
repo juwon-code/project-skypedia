@@ -22,14 +22,14 @@ public class VotePostMetrics {
     private Long likeCount;
 
     @Builder
-    public VotePostMetrics(Long votePostId, Long viewCount, Long likeCount) {
+    public VotePostMetrics(Long votePostId) {
         this.votePostId = votePostId;
-        this.viewCount = viewCount;
-        this.likeCount = likeCount;
+        this.viewCount = 0L;
+        this.likeCount = 0L;
     }
 
-    public void changeMetrics(Long viewCount, Long likeCount) {
-        this.viewCount = viewCount;
-        this.likeCount = likeCount;
+    public void refresh(Long viewCount, Long likeCount) {
+        this.viewCount += viewCount;
+        this.likeCount += likeCount;
     }
 }
