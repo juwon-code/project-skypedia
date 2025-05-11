@@ -1,6 +1,6 @@
 package com.prgrmsfinal.skypedia.post.entity;
 
-import java.time.LocalDateTime;
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.post.entity.compositekey.PostScrapId;
 import jakarta.persistence.*;
@@ -9,10 +9,7 @@ import lombok.*;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class PostScrap {
-	@EmbeddedId
-	private PostScrapId id;
-
+public class PostScrap extends AbstractAssociationEntity<PostScrapId, Post, Member> {
 	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("postId")
 	@JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false)
@@ -23,13 +20,15 @@ public class PostScrap {
 	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@Column(insertable = false, updatable = false, nullable = false)
-	private LocalDateTime createdAt;
-
 	@Builder
 	public PostScrap(Post post, Member member) {
-		this.id = new PostScrapId(post.getId(), member.getId());
+		super.initializeId(post, member);
 		this.post = post;
 		this.member = member;
+	}
+
+	@Override
+	protected PostScrapId createId(Post post, Member member) {
+		return new PostScrapId(post.getId(), member.getId());
 	}
 }

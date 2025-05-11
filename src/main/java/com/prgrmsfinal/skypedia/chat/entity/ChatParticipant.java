@@ -1,6 +1,7 @@
 package com.prgrmsfinal.skypedia.chat.entity;
 
 import com.prgrmsfinal.skypedia.chat.entity.compositekey.ChatParticipantId;
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,10 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class ChatParticipant {
-    @EmbeddedId
-    private ChatParticipantId id;
-
+public class ChatParticipant extends AbstractAssociationEntity<ChatParticipantId, ChatRoom, Member> {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @MapsId("chatRoomId")
     @JoinColumn(name = "chat_room_id", referencedColumnName = "id")
@@ -24,13 +22,15 @@ public class ChatParticipant {
     @JoinColumn(name = "member_id", referencedColumnName = "id")
     private Member member;
 
-    @Column(insertable = false, updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public ChatParticipant(ChatRoom chatRoom, Member member) {
-        this.id = new ChatParticipantId(chatRoom.getId(), member.getId());
+        super.initializeId(chatRoom, member);
         this.chatRoom = chatRoom;
         this.member = member;
+    }
+
+    @Override
+    protected ChatParticipantId createId(ChatRoom chatRoom, Member member) {
+        return new ChatParticipantId(chatRoom.getId(), member.getId());
     }
 }

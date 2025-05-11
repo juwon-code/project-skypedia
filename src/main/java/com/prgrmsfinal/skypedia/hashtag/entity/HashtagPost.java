@@ -1,5 +1,6 @@
 package com.prgrmsfinal.skypedia.hashtag.entity;
 
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.hashtag.entity.compositekey.HashtagPostId;
 import com.prgrmsfinal.skypedia.post.entity.Post;
 import jakarta.persistence.*;
@@ -13,10 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class HashtagPost {
-    @EmbeddedId
-    private HashtagPostId id;
-
+public class HashtagPost extends AbstractAssociationEntity<HashtagPostId, Hashtag, Post> {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @MapsId("hashtagId")
     @JoinColumn(name = "hashtag_id", referencedColumnName = "id", nullable = false)
@@ -27,13 +25,15 @@ public class HashtagPost {
     @JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false)
     private Post post;
 
-    @Column(insertable = false, updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public HashtagPost(Hashtag hashtag, Post post) {
-        this.id = new HashtagPostId(hashtag.getId(), post.getId());
+        super.initializeId(hashtag, post);
         this.hashtag = hashtag;
         this.post = post;
+    }
+
+    @Override
+    protected HashtagPostId createId(Hashtag hashtag, Post post) {
+        return new HashtagPostId(hashtag.getId(), post.getId());
     }
 }
