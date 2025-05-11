@@ -1,5 +1,6 @@
 package com.prgrmsfinal.skypedia.photo.entity;
 
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.photo.entity.compositekey.PhotoVotePostId;
 import com.prgrmsfinal.skypedia.votepost.entity.VotePost;
 import jakarta.persistence.*;
@@ -7,15 +8,11 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class PhotoVotePost {
-    @EmbeddedId
-    private PhotoVotePostId id;
-
+public class PhotoVotePost extends AbstractAssociationEntity<PhotoVotePostId, Photo, VotePost> {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @MapsId("photoId")
     @JoinColumn(name = "photo_id", referencedColumnName = "id", nullable = false)
@@ -26,13 +23,15 @@ public class PhotoVotePost {
     @JoinColumn(name = "vote_post_id", referencedColumnName = "id", nullable = false)
     private VotePost votePost;
 
-    @Column(insertable = false, updatable = false, nullable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public PhotoVotePost(Photo photo, VotePost votePost) {
-        this.id = new PhotoVotePostId(photo.getId(), votePost.getId());
+        super.initializeId(photo, votePost);
         this.photo = photo;
         this.votePost = votePost;
+    }
+
+    @Override
+    protected PhotoVotePostId createId(Photo photo, VotePost votePost) {
+        return new PhotoVotePostId(photo.getId(), votePost.getId());
     }
 }

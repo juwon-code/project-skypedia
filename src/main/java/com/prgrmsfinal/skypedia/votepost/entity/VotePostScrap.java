@@ -1,18 +1,15 @@
 package com.prgrmsfinal.skypedia.votepost.entity;
 
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.votepost.entity.compositekey.VotePostScrapId;
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class VotePostScrap {
-    @EmbeddedId
-    private VotePostScrapId id;
-
+public class VotePostScrap extends AbstractAssociationEntity<VotePostScrapId, VotePost, Member> {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @MapsId("votePostId")
     @JoinColumn(name = "vote_post_id", referencedColumnName = "id", nullable = false)
@@ -23,13 +20,15 @@ public class VotePostScrap {
     @JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
     private Member member;
 
-    @Column(nullable = false, insertable = false, updatable = false)
-    private LocalDateTime createdAt;
-
     @Builder
     public VotePostScrap(VotePost votePost, Member member) {
-        this.id = new VotePostScrapId(votePost.getId(), member.getId());
+        super.initializeId(votePost, member);
         this.votePost = votePost;
         this.member = member;
+    }
+
+    @Override
+    protected VotePostScrapId createId(VotePost votePost, Member member) {
+        return new VotePostScrapId(votePost.getId(), member.getId());
     }
 }
