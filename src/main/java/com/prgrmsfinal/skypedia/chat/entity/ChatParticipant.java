@@ -17,7 +17,7 @@ public class ChatParticipant extends AbstractAssociationEntity<ChatParticipantId
     @JoinColumn(name = "chat_room_id", referencedColumnName = "id")
     private ChatRoom chatRoom;
 
-    @ManyToOne(cascade = CascadeType.REMOVE)
+    @ManyToOne
     @MapsId("memberId")
     @JoinColumn(name = "member_id", referencedColumnName = "id")
     private Member member;

@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -20,11 +22,15 @@ public class MemberRole {
     private Member member;
 
     @Enumerated(EnumType.STRING)
-    private RoleType role;
+    @Column(length = 20, nullable = false)
+    private RoleType roleType;
+
+    @Column(insertable = false, updatable = false, nullable = false)
+    private LocalDateTime createdAt;
 
     @Builder
-    public MemberRole(Member member, RoleType role) {
+    public MemberRole(Member member, RoleType roleType) {
         this.member = member;
-        this.role = role;
+        this.roleType = roleType;
     }
 }

@@ -14,7 +14,7 @@ public class NotifyMessage {
 	private Long id;
 
 	@Enumerated(EnumType.STRING)
-	@Column(nullable = false)
+	@Column(length = 20, nullable = false)
 	private NotifyType notifyType;
 
 	@Column(nullable = false)
@@ -37,5 +37,9 @@ public class NotifyMessage {
 		this.content = content;
 		this.url = url;
 		this.activated = true;
+	}
+
+	public void deactivate() {
+		this.activated = false;
 	}
 }

@@ -27,9 +27,6 @@ public class Reply {
 	private String content;
 
 	@Column(nullable = false)
-	private Long likeCount;
-
-	@Column(nullable = false)
 	private boolean updated;
 
 	@Column(nullable = false)
@@ -48,7 +45,6 @@ public class Reply {
 		this.member = member;
 		this.parentReply = parentReply;
 		this.content = content;
-		this.likeCount = 0L;
 		this.updated = false;
 		this.removed = false;
 		this.removedAt = null;
@@ -62,9 +58,5 @@ public class Reply {
 	public void remove() {
 		this.removed = true;
 		this.removedAt = LocalDateTime.now();
-	}
-
-	public void refreshLikeCount(int likeCount) {
-		this.likeCount += likeCount;
 	}
 }

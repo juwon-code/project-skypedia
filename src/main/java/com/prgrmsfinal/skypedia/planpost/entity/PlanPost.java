@@ -56,9 +56,12 @@ public class PlanPost {
         this.removedAt = null;
     }
 
-    public void modify(String title, String summary, BigDecimal totalRating) {
+    public void modify(String title, String summary) {
         this.title = title;
         this.summary = summary;
+    }
+
+    public void refreshRating(BigDecimal totalRating) {
         this.totalRating = totalRating;
     }
 

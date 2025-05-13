@@ -24,7 +24,7 @@ public class Member {
 	private String name;
 
 	@Column(length = 20, unique = true, nullable = false)
-	private String username;
+	private String nickname;
 
 	@Column(length = 50, unique = true, nullable = false)
 	private String email;
@@ -41,10 +41,10 @@ public class Member {
 	private LocalDateTime removedAt;
 
 	@Builder
-	public Member(String oauthId, String name, String username, String email) {
+	public Member(String oauthId, String name, String nickname, String email) {
 		this.oauthId = oauthId;
 		this.name = name;
-		this.username = username;
+		this.nickname = nickname;
 		this.email = email;
 		this.removed = false;
 		this.removedAt = null;
@@ -55,7 +55,7 @@ public class Member {
 		this.removedAt = LocalDateTime.now();
 	}
 
-	public void changeUsername(String username) {
-		this.username = username;
+	public void changeNickname(String nickname) {
+		this.nickname = nickname;
 	}
 }
