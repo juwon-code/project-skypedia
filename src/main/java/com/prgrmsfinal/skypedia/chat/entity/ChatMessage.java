@@ -30,7 +30,7 @@ public class ChatMessage {
     private String content;
 
     @Column(nullable = false)
-    private boolean isPhoto;
+    private boolean imaged;
 
     @Column(nullable = false)
     private boolean removed;
@@ -41,11 +41,11 @@ public class ChatMessage {
     private LocalDateTime removedAt;
 
     @Builder
-    public ChatMessage(ChatRoom chatRoom, Member member, String content, boolean isPhoto) {
+    public ChatMessage(ChatRoom chatRoom, Member member, String content, boolean imaged) {
         this.chatRoom = chatRoom;
         this.member = member;
         this.content = content;
-        this.isPhoto = isPhoto;
+        this.imaged = imaged;
         this.removed = false;
         this.removedAt = null;
     }

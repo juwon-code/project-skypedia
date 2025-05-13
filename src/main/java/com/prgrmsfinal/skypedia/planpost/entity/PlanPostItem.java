@@ -47,9 +47,13 @@ public class PlanPostItem {
 
     private LocalDateTime removedAt;
 
+    private Long previousId;
+
+    private Long nextId;
+
     @Builder
     public PlanPostItem(PlanPost planPost, String placeId, String placeName, String description, Point coordinates
-            , BigDecimal rating) {
+            , BigDecimal rating, Long previousId, Long nextId) {
         this.planPost = planPost;
         this.placeId = placeId;
         this.placeName = placeName;
@@ -58,18 +62,34 @@ public class PlanPostItem {
         this.rating = rating;
         this.removed = false;
         this.removedAt = null;
+        setItemPositions(previousId, nextId);
     }
 
-    public void modify(String placeId, String placeName, String description, Point coordinates, BigDecimal rating) {
+    public void modify(String placeId, String placeName, String description, Point coordinates, BigDecimal rating
+            , Long previousId, Long nextId) {
         this.placeId = placeId;
         this.placeName = placeName;
         this.description = description;
         this.coordinates = coordinates;
         this.rating = rating;
+        setItemPositions(previousId, nextId);
     }
 
     public void remove() {
         this.removed = true;
         this.removedAt = LocalDateTime.now();
+    }
+
+    private void setItemPositions(Long previousId, Long nextId) {
+        if (previousId != null && previousId < 0) {
+            throw new IllegalArgumentException("이전 아이디에는 음수값을 허용되지 않습니다.");
+        }
+
+        if (nextId != null && nextId < 0) {
+            throw new IllegalArgumentException("다음 아이디에는 음수값이 허용되지 않습니다.");
+        }
+
+        this.previousId = previousId;
+        this.nextId = nextId;
     }
 }

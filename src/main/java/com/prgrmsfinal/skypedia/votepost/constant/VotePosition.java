@@ -1,7 +1,10 @@
 package com.prgrmsfinal.skypedia.votepost.constant;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 
+@Getter
 public enum VotePosition {
     FIRST(1), SECOND(2);
 
@@ -9,10 +12,6 @@ public enum VotePosition {
 
     VotePosition(int value) {
         this.value = value;
-    }
-
-    public int getValue() {
-        return value;
     }
 
     public static VotePosition getInstance(int value) {

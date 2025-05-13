@@ -20,7 +20,7 @@ public class PostCategory {
 	@Column(length = 100, unique = true, nullable = false)
 	private String name;
 
-	@Column(length = 1000, nullable = false)
+	@Column(nullable = false)
 	private String description;
 
 	@Column(nullable = false, insertable = false, updatable = false)
