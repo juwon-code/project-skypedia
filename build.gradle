@@ -28,7 +28,7 @@ dependencies {
     * Base Dependency List
     * - Spring Boot Starter Web          :: Spring MVC 애플리케이션 개발의 기본 설정을 제공하는 라이브러리.
     * - Spring Boot Starter Websocket    :: WebSocket 기반 실시간 통신 기능을 지원하는 라이브러리.
-    * - Spring Boot Starter Actuator     ::
+    * - Spring Boot Starter Actuator     :: 서비스의 헬스 모니터링 기능을 제공하는 라이브러리.
     * - Spring Boot Starter Devtools     :: 개발 편의성 기능들을 제공하는 라이브러리.
     * - Project Lombok                   :: 보일러플레이트 코드를 줄여주는 애너테이션 기반 라이브러리.
     * - Apache Commons Lang3             :: Java의 기본 기능을 확장하는 유틸리티 라이브러리.
