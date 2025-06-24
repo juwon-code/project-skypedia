@@ -1,12 +1,12 @@
 package com.prgrmsfinal.skypedia.member.entity;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import com.prgrmsfinal.skypedia.global.constant.RoleType;
+import com.prgrmsfinal.skypedia.global.constant.SocialType;
+import com.prgrmsfinal.skypedia.photo.entity.PhotoProfile;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
@@ -14,7 +14,8 @@ import lombok.*;
 @Getter
 public class Member {
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_id_seq")
+	@SequenceGenerator(name = "member_id_seq", sequenceName = "member_id_seq")
 	private Long id;
 
 	@Column(unique = true, nullable = false)
@@ -29,6 +30,10 @@ public class Member {
 	@Column(length = 50, unique = true, nullable = false)
 	private String email;
 
+	@Enumerated(EnumType.STRING)
+	@Column(length = 6, nullable = false)
+	private SocialType socialType;
+
 	@Column(nullable = false)
 	private boolean removed;
 
@@ -39,6 +44,12 @@ public class Member {
 	private LocalDateTime updatedAt;
 
 	private LocalDateTime removedAt;
+
+	@OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+	private List<MemberRole> memberRoles;
+
+	@OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
+	private PhotoProfile photoProfile;
 
 	@Builder
 	public Member(String oauthId, String name, String nickname, String email) {
@@ -55,7 +66,39 @@ public class Member {
 		this.removedAt = LocalDateTime.now();
 	}
 
+	public void restore() {
+		this.removed = false;
+		this.removedAt = null;
+	}
+
 	public void changeNickname(String nickname) {
 		this.nickname = nickname;
+	}
+
+	public void changePhotoProfile(PhotoProfile photoProfile) {
+		this.photoProfile = photoProfile;
+	}
+
+	public boolean addRole(RoleType roleType) {
+		boolean isExists = memberRoles.stream()
+				.anyMatch(memberRole -> memberRole.getRoleType().equals(roleType));
+
+		if (isExists) {
+			return false;
+		}
+
+		MemberRole memberRole = MemberRole.builder()
+				.member(this)
+				.roleType(roleType)
+				.build();
+
+		this.memberRoles.add(memberRole);
+		return true;
+	}
+
+	public boolean removeRole(RoleType roleType) {
+		boolean isSucceed = this.memberRoles.removeIf(memberRole -> memberRole.getRoleType().equals(roleType));
+
+		return isSucceed;
 	}
 }

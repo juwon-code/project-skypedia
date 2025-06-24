@@ -1,6 +1,6 @@
 package com.prgrmsfinal.skypedia.member.entity;
 
-import com.prgrmsfinal.skypedia.member.constant.RoleType;
+import com.prgrmsfinal.skypedia.global.constant.RoleType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -14,7 +14,8 @@ import java.time.LocalDateTime;
 @Getter
 public class MemberRole {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_role_id_seq")
+    @SequenceGenerator(name = "member_role_id_seq", sequenceName = "member_role_id_seq")
     private Long id;
 
     @ManyToOne(cascade = CascadeType.REMOVE)

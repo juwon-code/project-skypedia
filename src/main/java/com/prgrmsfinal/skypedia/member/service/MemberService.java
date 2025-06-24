@@ -1,25 +1,39 @@
 package com.prgrmsfinal.skypedia.member.service;
 
-import org.springframework.security.core.Authentication;
-
-import com.prgrmsfinal.skypedia.member.dto.MemberRequestDTO;
-import com.prgrmsfinal.skypedia.member.dto.MemberResponseDTO;
+import com.prgrmsfinal.skypedia.global.dto.SearchRequestDto;
+import com.prgrmsfinal.skypedia.global.dto.SearchResponseDto;
+import com.prgrmsfinal.skypedia.member.entity.MemberDocument;
+import com.prgrmsfinal.skypedia.member.dto.MemberInternalDto;
+import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
+import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
 import com.prgrmsfinal.skypedia.member.entity.Member;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public interface MemberService {
-	Member getAuthenticatedMember(Authentication authentication);
+	Member create(MemberInternalDto.Create member);
 
-	void modify(Long id, MemberRequestDTO memberRequestDTO);
+	MemberInternalDto.Profile getProfileByOAuthId(String oauthId);
 
-	MemberResponseDTO read(Long id);
+	MemberResponseDto.ReadProfile getMyProfile();
 
-	MemberResponseDTO readByUsername(String username);
+	MemberResponseDto.ChangeProfile changeMyProfile(MemberRequestDto.ChangeProfile changeDto);
 
-	void deleteMember(Long id);
+	MemberResponseDto.ChangeProfile changeProfile(Long memberId, MemberRequestDto.ChangeProfile changeDto);
 
-	void physicalDeleteMember();
+	MemberResponseDto.Withdraw removeMe();
 
-	boolean checkExistsByUsername(String username);
+	SearchResponseDto.Pagination<MemberDocument> search(SearchRequestDto.Member requestDto);
 
-	Member getByUsername(String username);
+	LocalDateTime remove(Long memberId);
+
+	void reset(Long memberId);
+
+	void restore(Long memberId);
+
+	String changeRole(Long memberId, MemberRequestDto.ChangeRole requestDto);
+
+	String generateRandomNickname();
+
+	void purgeRemovedMembers();
 }

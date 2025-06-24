@@ -1,133 +1,138 @@
 package com.prgrmsfinal.skypedia.member.controller;
 
-import org.springframework.http.HttpStatus;
+import com.prgrmsfinal.skypedia.global.constant.SearchOption;
+import com.prgrmsfinal.skypedia.global.constant.SortType;
+import com.prgrmsfinal.skypedia.global.dto.CommonResponseDto;
+import com.prgrmsfinal.skypedia.global.dto.SearchRequestDto;
+import com.prgrmsfinal.skypedia.global.dto.SearchResponseDto;
+import com.prgrmsfinal.skypedia.member.entity.MemberDocument;
+import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
+import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
+import jakarta.validation.constraints.Min;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.prgrmsfinal.skypedia.member.dto.MemberRequestDTO;
-import com.prgrmsfinal.skypedia.member.dto.MemberResponseDTO;
-import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.member.repository.MemberRepository;
+import org.springframework.web.bind.annotation.*;
 import com.prgrmsfinal.skypedia.member.service.MemberService;
-import com.prgrmsfinal.skypedia.oauth2.jwt.CustomUserDetails;
-
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Tag(name = "회원 API 컨트롤러", description = "회원과 관련된 REST API를 제공하는 컨트롤러")
 @RestController
-@RequiredArgsConstructor
-@RequestMapping("/api/v1/member")
+@RequestMapping("/api/v1")
 @Slf4j
 @Validated
 public class MemberController {
 	private final MemberService memberService;
-	private final MemberRepository memberRepository;
 
-	/** 내 계정 조회 */
-	@Operation(summary = "내 계정 조회", description = "현재 인증된 사용자의 계정 정보를 조회합니다.")
-	@ApiResponses({
-		@ApiResponse(responseCode = "200",
-			content = @Content(mediaType = "application/json",
-				schema = @Schema(implementation = MemberResponseDTO.class))),
-		@ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
-		@ApiResponse(responseCode = "500", description = "서버 오류")
-	})
-	@GetMapping("/me")
-	public ResponseEntity<MemberResponseDTO> getCurrentMember() {
-		try {
-			Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-			CustomUserDetails userDetails = (CustomUserDetails)authentication.getPrincipal();
-
-			Member member = memberRepository.findById(userDetails.getId())
-				.orElseThrow(() -> new UsernameNotFoundException("Member not found"));
-			return ResponseEntity.ok(new MemberResponseDTO(member));
-		} catch (Exception e) {
-			log.error("Error getting current member: {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
+	@Autowired
+	public MemberController(MemberService memberService) {
+		this.memberService = memberService;
 	}
 
-	/** 내 계정 수정 */
-	@Operation(summary = "내 계정 수정", description = "현재 인증된 사용자의 계정 정보를 수정합니다.")
-	@ApiResponses({
-		@ApiResponse(responseCode = "200",
-			content = @Content(mediaType = "application/json",
-				schema = @Schema(implementation = MemberResponseDTO.class))),
-		@ApiResponse(responseCode = "400", description = "잘못된 요청 데이터"),
-		@ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
-		@ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
-		@ApiResponse(responseCode = "500", description = "서버 오류")
-	})
-	@PutMapping("/me")
-	public ResponseEntity<MemberResponseDTO> putCurrentMember(
-		@AuthenticationPrincipal CustomUserDetails userDetails,
-		@Valid @RequestBody MemberRequestDTO memberRequestDTO) {
-		try {
-			Member member = memberRepository.findById(userDetails.getId())
-				.orElseThrow(() -> new UsernameNotFoundException("Member not found"));
-			memberService.modify(member.getId(), memberRequestDTO);
-			return ResponseEntity.ok(new MemberResponseDTO(member));
-		} catch (Exception e) {
-			log.error("Error updating member: {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
+	@GetMapping("/member")
+	public ResponseEntity<CommonResponseDto> readMyProfile() {
+		MemberResponseDto.ReadProfile responseDto = memberService.getMyProfile();
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("내 프로필을 성공적으로 조회했습니다.")
+				.result(responseDto)
+				.build()
+		);
 	}
 
-	/** 내 계정 탈퇴 */
-	@Operation(summary = "내 계정 탈퇴", description = "현재 인증된 사용자의 계정을 삭제합니다.")
-	@ApiResponses({
-		@ApiResponse(responseCode = "204"),
-		@ApiResponse(responseCode = "401", description = "인증되지 않은 사용자"),
-		@ApiResponse(responseCode = "500", description = "서버 오류")
-	})
-	@DeleteMapping("/me")
-	public ResponseEntity<Void> deleteCurrentMember(
-		@AuthenticationPrincipal CustomUserDetails userDetails) {
-		try {
-			memberService.deleteMember(userDetails.getId());
-			return ResponseEntity.noContent().build();
-		} catch (Exception e) {
-			log.error("Error deleting member: {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-		}
+	@PatchMapping("/member")
+	public ResponseEntity<CommonResponseDto> updateMyProfile(@Valid @RequestBody MemberRequestDto.ChangeProfile dto) {
+		MemberResponseDto.ChangeProfile responseDto = memberService.changeMyProfile(dto);
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("내 프로필을 성공적으로 업데이트했습니다.")
+				.result(responseDto)
+				.build()
+		);
 	}
 
-	/** 타인 계정 조회 */
-	@Operation(summary = "타인 계정 조회", description = "특정 사용자의 계정 정보를 조회합니다.")
-	@ApiResponses({
-		@ApiResponse(responseCode = "200",
-			content = @Content(mediaType = "application/json",
-				schema = @Schema(implementation = MemberResponseDTO.class))),
-		@ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
-		@ApiResponse(responseCode = "500", description = "서버 오류")
-	})
-	@GetMapping("/{username}")
-	public ResponseEntity<MemberResponseDTO> getMember(@PathVariable String username) {
-		try {
-			MemberResponseDTO response = memberService.readByUsername(username);
-			return ResponseEntity.ok(response);
-		} catch (Exception e) {
-			log.error("Error getting member: {}", e.getMessage());
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-		}
+	@DeleteMapping("/member")
+	public ResponseEntity<CommonResponseDto> withdrawMe() {
+		MemberResponseDto.Withdraw responseDto = memberService.removeMe();
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("회원이 탈퇴되었습니다.")
+				.result(responseDto)
+				.build()
+		);
 	}
+
+	@GetMapping("/admin/member/{memberId}")
+	public ResponseEntity<CommonResponseDto> read(@PathVariable @Min(value = 0, message = "회원의 ID 값은 0이상이어야 합니다.") Long memberId) {
+		return null;
+	}
+
+
+	@GetMapping("/admin/member/search")
+	public ResponseEntity<CommonResponseDto> search(
+			@RequestParam(required = false, name = "option", defaultValue = "MEMBER_NICKNAME") SearchOption searchOption,
+			@RequestParam(required = false, name = "keyword", defaultValue = "") String keyword,
+			@RequestParam(required = false, name = "sort", defaultValue = "newest") SortType sortType,
+			@RequestParam(required = false, name = "page", defaultValue = "1") int page
+			) {
+		SearchRequestDto.Member requestDto = SearchRequestDto.Member.builder()
+				.searchOption(searchOption)
+				.keyword(keyword)
+				.sortType(sortType)
+				.page(page)
+				.build();
+
+		SearchResponseDto.Pagination<MemberDocument> responseDto = memberService.search(requestDto);
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("데이터를 성공적으로 조회했습니다.")
+				.result(responseDto)
+				.build()
+		);
+	}
+
+	@PatchMapping("/admin/member/{memberId}/role")
+	public ResponseEntity<CommonResponseDto> updateRoles(@PathVariable @Min(value = 0, message = "회원의 ID 값은 0이상이어야 합니다.") Long memberId
+			, @Valid @RequestBody MemberRequestDto.ChangeRole requestDto) {
+		String message = memberService.changeRole(memberId, requestDto);
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message(message)
+				.build()
+		);
+	}
+
+	@DeleteMapping("/admin/member/{memberId}")
+	public ResponseEntity<CommonResponseDto> withdraw(@PathVariable @Min(value = 0, message = "회원의 ID 값은 0이상이어야 합니다.") Long memberId) {
+		memberService.remove(memberId);
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("해당 회원을 강제탈퇴 처리했습니다.")
+				.build()
+		);
+	}
+
+	@PatchMapping("/admin/member/{memberId}/reset")
+	public ResponseEntity<CommonResponseDto> reset(@PathVariable @Min(value = 0, message = "회원의 ID 값은 0이상이어야 합니다.") Long memberId) {
+		memberService.reset(memberId);
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("해당 회원의 프로필을 초기화했습니다.")
+				.build()
+		);
+	}
+
+	@PatchMapping("/admin/member/{memberId}/restore")
+	public ResponseEntity<CommonResponseDto> restore(@PathVariable @Min(value = 0, message = "회원의 ID 값은 0이상이어야 합니다.") Long memberId) {
+		memberService.restore(memberId);
+
+		return ResponseEntity.ok(CommonResponseDto.ApiSuccess.builder()
+				.message("해당 회원을 복구 처리했습니다.")
+				.build()
+		);
+	}
+
+
 }

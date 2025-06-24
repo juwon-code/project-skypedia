@@ -3,66 +3,78 @@ package com.prgrmsfinal.skypedia.global.exception;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.prgrmsfinal.skypedia.global.dto.CommonResponseDto;
 import org.springframework.beans.TypeMismatchException;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.prgrmsfinal.skypedia.global.dto.ErrorResponseDTO;
 
 import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-	@ExceptionHandler(CommonException.class)
-	public ResponseEntity<Map<String, Object>> handleCommonException(CommonException e) {
-		return ResponseEntity.status(e.getCode()).body(Map.of("status", e.getCode(), "message", e.getMessage()));
+	@ExceptionHandler(AbstractBaseException.class)
+	public ResponseEntity<Map<String, String>> handleBaseException(AbstractBaseException e) {
+		return ResponseEntity.status(e.getHttpStatus()).body(Map.of("message", e.getMessage()));
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)
-	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ErrorResponseDTO.Valid handleConstraintViolationException(ConstraintViolationException e) {
+	public ResponseEntity<CommonResponseDto.ApiError> handleConstraintViolationException(ConstraintViolationException e) {
 		Map<String, String> details = new HashMap<>();
 
 		e.getConstraintViolations().forEach(violation -> {
-			String fieldName = violation.getPropertyPath().toString();
-			String message = violation.getMessage();
+			String path = violation.getPropertyPath().toString();
+			String fieldName = path.contains(".") ? path.substring(path.lastIndexOf(".") + 1) : path;
+            String message = violation.getMessage();
 			details.put(fieldName, message);
 		});
 
-		return new ErrorResponseDTO.Valid(HttpStatus.BAD_REQUEST, "잘못된 요청 파라미터가 감지되었습니다.", details);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponseDto.ApiError.builder()
+                        .message("요청 바디에 잘못된 값이 감지되었습니다.")
+                        .details(details)
+                        .build()
+                );
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ErrorResponseDTO.Valid handleMethodArgumentNotValidException(
+	public ResponseEntity<CommonResponseDto.ApiError> handleMethodArgumentNotValidException(
 		MethodArgumentNotValidException e) {
 		Map<String, String> details = new HashMap<>();
 
-		e.getBindingResult().getAllErrors().forEach(error -> {
-			String field = ((FieldError)error).getField();
-			String message = error.getDefaultMessage();
-			details.put(field, message);
+		e.getBindingResult().getFieldErrors().forEach(error -> {
+			details.put(error.getField(), error.getDefaultMessage());
 		});
 
-		return new ErrorResponseDTO.Valid(HttpStatus.BAD_REQUEST, "잘못된 요청 데이터가 감지되었습니다.", details);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponseDto.ApiError.builder()
+                        .message("요청 쿼리에 잘못된 값이 감지되었습니다.")
+                        .details(details)
+                        .build()
+                );
 	}
 
 	@ExceptionHandler(TypeMismatchException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ErrorResponseDTO.Valid handleTypeMismatchException(TypeMismatchException e) {
-		return new ErrorResponseDTO.Valid(HttpStatus.BAD_REQUEST, "필드 타입에 위배되는 값을 감지했습니다.",
-			Map.of("field", e.getPropertyName(), "message", "필드 타입에 맞게 값을 수정해주세요."));
-	}
+	public ResponseEntity<CommonResponseDto.ApiError> handleTypeMismatchException(TypeMismatchException e) {
+		Map<String, String> details = new HashMap<>();
 
-	@ExceptionHandler(DataIntegrityViolationException.class)
-	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	public Map<String, Object> handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-		return Map.of("status", HttpStatus.INTERNAL_SERVER_ERROR, "message", "서버 내부에서 에러가 발생했습니다. 관라자에게 문의하세요.");
+        String fieldName = e.getPropertyName();
+        String invalidValue = String.valueOf(e.getValue());
+        String requiredType = e.getRequiredType() != null ? e.getRequiredType().getSimpleName() : "?";
+
+        details.put(fieldName, String.format("'%s'는 %s 타입으로 변환할 수 없습니다.", invalidValue, requiredType));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponseDto.ApiError.builder()
+                        .message("요청 타입이 잘못되었습니다.")
+                        .details(details)
+                        .build()
+                );
 	}
 }

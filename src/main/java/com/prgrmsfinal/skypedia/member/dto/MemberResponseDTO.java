@@ -1,46 +1,92 @@
 package com.prgrmsfinal.skypedia.member.dto;
 
-import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.member.entity.Role;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.prgrmsfinal.skypedia.global.constant.SocialType;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
-import lombok.Getter;
+import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.URL;
+import org.hibernate.validator.constraints.UUID;
 
-@Getter
-public class MemberResponseDTO {    //회원 조회용 DTO
-	private final Long id;
-	private final String oauthId;
-	private final String name;
-	private final String email;
-	private final String username;
-	private final Role role;
-	private final String profileImage;
+import java.time.LocalDateTime;
 
-	public MemberResponseDTO(Member member) {
-		this.id = member.getId();
-		this.oauthId = member.getOauthId();
-		this.name = member.getName();
-		this.email = member.getEmail();
-		this.username = member.getUsername();
-		this.role = member.getRole();
-		this.profileImage = member.getProfileImage();
-	}
+public sealed interface MemberResponseDto permits MemberResponseDto.ReadProfile, MemberResponseDto.SimpleProfile
+        , MemberResponseDto.ChangeProfile, MemberResponseDto.Withdraw, MemberResponseDto.Login {
+    record ReadProfile(
+            @Length(min = 2, max = 20, message = "닉네임은 2 ~ 20자 길이여야 합니다.")
+            @NotBlank(message = "닉네임은 비워둘 수 없습니다.")
+            @Pattern(regexp = "^[^\\s]+$", message = "닉네임은 공백을 포함될 수 없습니다.")
+            String nickname,
 
-	@Schema(title = "회원 정보 조회 DTO", description = "회원 정보 조회에 사용하는 DTO입니다.")
-	@Getter
-	@Builder
-	@AllArgsConstructor
-	public static class Info {
-		@Schema(title = "회원 ID", description = "회원 ID입니다.", example = "1")
-		private final Long id;
+            @NotNull(message = "이메일은 비워둘 수 없습니다.")
+            @Email(message = "이메일 형식과 일치하지 않습니다.")
+            String email,
 
-		@Schema(title = "닉네임", description = "회원 닉네임입니다.", example = "닉네임1")
-		private final String username;
+            @NotNull(message = "소셜 계정 형식은 비워둘 수 없습니다.")
+            SocialType socialType,
 
-		@Schema(title = "사진 URL", description = "사진 URL입니다.", minimum = "1", example = "25")
-		private final String profileUrl;
+            @URL(message = "프로필 사진 링크가 올바른 URL 형식이 아닙니다.")
+            String profilePhotoUrl
+    ) implements MemberResponseDto {
+        @Builder
+        public ReadProfile {}
+    }
 
-	}
+    record SimpleProfile(
+            @Length(min = 2, max = 20, message = "닉네임은 2 ~ 20자 길이여야 합니다.")
+            @NotBlank(message = "닉네임은 비워둘 수 없습니다.")
+            @Pattern(regexp = "^[^\\s]+$", message = "닉네임은 공백을 포함될 수 없습니다.")
+            String nickname,
+
+            @URL(message = "프로필 사진 링크가 올바른 URL 형식이 아닙니다.")
+            String profilePhotoUrl
+    ) implements MemberResponseDto {
+        @Builder
+        public SimpleProfile {}
+    }
+
+    record ChangeProfile(
+            @Length(min = 2, max = 20, message = "닉네임은 2 ~ 20자 길이여야 합니다.")
+            @Pattern(regexp = "^[^\\s]+$", message = "닉네임은 공백을 포함할 수 없습니다.")
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            String nickname,
+
+            @UUID(message = "올바른 UUID 형태가 아닙니다.")
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            String uuid,
+
+            @URL(message = "프로필 사진 업로드 링크는 URL 형식이어야 합니다.")
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            String uploadUrl
+    ) implements MemberResponseDto {
+        @Builder
+        public ChangeProfile {}
+    }
+
+    record Withdraw(
+            @NotNull(message = "삭제한 날짜는 비워둘 수 없습니다.")
+            LocalDateTime removedAt,
+
+            @NotNull(message = "영구 삭제되는 날짜는 비워둘 수 없습니다.")
+            LocalDateTime willDeletedAt
+    ) implements MemberResponseDto {
+        @Builder
+        public Withdraw {}
+    }
+
+    record Login(
+            @Length(min = 2, max = 20, message = "닉네임은 2 ~ 20자 길이여야 합니다.")
+            @NotBlank(message = "닉네임은 비워둘 수 없습니다.")
+            @Pattern(regexp = "^[^\\s]+$", message = "닉네임은 공백을 포함될 수 없습니다.")
+            String nickname,
+
+            @URL(message = "프로필 사진 링크가 올바른 URL 형식이 아닙니다.")
+            String profilePhotoUrl,
+
+            @NotNull(message = "인증 토큰은 반드시 발급되어야 합니다.")
+            String accessToken
+    ) implements MemberResponseDto {
+        @Builder
+        public Login {}
+    }
 }
