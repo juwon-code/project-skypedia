@@ -13,70 +13,134 @@ services:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
     depends_on:
-      - app-server
-      - certbot
+      app-server:
+        condition: service_healthy
+      certbot:
+        condition: service_started
     command: ["nginx", "-g", "daemon off;"]
     networks:
       - public-net
 
-  # certbot
+  # Certbot
   certbot:
     image: certbot/certbot:v1.7.0
     container_name: certbot
     volumes:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done'"
+    entrypoint: "/bin/sh -c 'certbot renew --webroot -w /var/www/certbot --quiet && sleep 12h & exit 0'"
     networks:
       - public-net
 
   # Application server
   app:
     image: ${DOCKER_IMAGE_PATH}:latest
+    env_file:
+      - .env
     container_name: app-server
-    ports:
-      - "8080:8080"
     build:
       context: .
       dockerfile: Dockerfile
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
-      - mysql-db
-      - redis-db
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      elastic-search:
+        condition: service_healthy
+      elastic-search-setup:
+        condition: service_completed_successfully
     volumes:
       - ./logs:/logs
     networks:
       - internal-net
+    expose:
+      - "8080"
 
   # Redis DB
-  redis:
+  redis-db:
     image: redis:7.4.2-alpine
     container_name: redis-db
-    ports:
-      - "6379:6379"
     environment:
       REDIS_PASSWORD: ${IMDB_PASSWORD}
     command: ["redis-server", "--requirepass", "${IMDB_PASSWORD}"]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${IMDB_PASSWORD}", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     networks:
       - internal-net
+    expose:
+      - "6379"
 
-  # Mysql DB
-  mysql:
-    image: mysql:8.0.39
-    container_name: mysql-db
-    ports:
-      - "3306:3306"
+  # PostgreSQL DB (with PostGIS)
+  postgres-db:
+    image: postgis/postgis:17-master
+    container_name: postgres-db
     environment:
-      TZ: Asia/Seoul
-      MYSQL_DATABASE: ${RDB_SCHEMA_NAME}
-      MYSQL_ROOT_PASSWORD: ${RDB_ROOT_PASSWORD}
-      MYSQL_USER: ${RDB_USERNAME}
-      MYSQL_PASSWORD: ${RDB_PASSWORD}
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --skip-character-set-client-handshake
+      POSTGRES_DB: ${RDB_SCHEMA_NAME}
+      POSTGRES_USER: ${RDB_USERNAME}
+      POSTGRES_PASSWORD: ${RDB_PASSWORD}
+    command: ["postgres", "-c", "timezone=Asia/Seoul"]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      - ./pg-data:/var/lib/postgresql/data
+    networks:
+      - internal-net
+    expose:
+      - "5432"
+
+  # Elasticsearch
+  elastic-search:
+    container_name: elastic-search
+    build:
+      context: .
+      dockerfile: elasticsearch.Dockerfile
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
+      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -u $${ELASTIC_USERNAME}:$${ELASTIC_PASSWORD} -s http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 10s
+      retries: 10
+      timeout: 5s
+      start_period: 20s
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./es-data:/usr/share/elasticsearch/data
+    networks:
+      - internal-net
+    expose:
+      - "9200"
+
+  # Elasticsearch Setup
+  elastic-search-setup:
+    image: elastic-search
+    depends_on:
+      elastic-search:
+        condition: service_healthy
+    command: ["/usr/share/elasticsearch/init.sh"]
+    environment:
+      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
+      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
     networks:
       - internal-net
 

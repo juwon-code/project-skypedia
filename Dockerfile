@@ -24,4 +24,4 @@ WORKDIR /app
 COPY target/*.jar /app/app.jar
 
 # Run application with dockerize to waiting for DB load
-CMD ["dockerize", "-wait", "tcp://mysql-db:3306", "-wait", "tcp://redis-db:6379", "-timeout", "30s", "java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar"]
+CMD ["java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar"]
