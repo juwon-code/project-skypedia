@@ -5,9 +5,17 @@
     <property name="MAX_FILE_SIZE" value="${LOG_MAX_FILE_SIZE}"/>
     <property name="MAX_HISTORY" value="${LOG_MAX_HISTORY}"/>
     <property name="TOTAL_SIZE_CAP" value="${LOG_TOTAL_SIZE_CAP}"/>
+    <property name="LEVEL" value="${LOG_LEVEL}"/>
 
-    <!-- Rolling files -->
-    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- Console settings -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- File settings -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
             <fileNamePattern>${FILE_PATH}/%d{yy-MM-dd}.%i.log</fileNamePattern>
             <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
@@ -20,7 +28,8 @@
     </appender>
 
     <!-- Log level -->
-    <root level="${LOG_LEVEL}">
-        <appender-ref ref="ROLLING_FILE"/>
+    <root level="${LEVEL}">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
     </root>
 </configuration>

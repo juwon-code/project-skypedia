@@ -1,51 +1,44 @@
-USE skypedia;
-
 CREATE TABLE IF NOT EXISTS member
 (
-    id          BIGINT        AUTO_INCREMENT PRIMARY KEY,
-    oauth_id    VARCHAR(255)  UNIQUE NOT NULL,
-    name        VARCHAR(255)  NOT NULL,
-    nickname    VARCHAR(20)   UNIQUE NOT NULL,
-    email       VARCHAR(50)   UNIQUE NOT NULL,
-    removed     TINYINT(1)    NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
-    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    removed_at  TIMESTAMP     NULL,
-    FULLTEXT INDEX f_idx_hashtag_nickname (nickname)
+    id           BIGSERIAL    PRIMARY KEY,
+    oauth_id     TEXT         UNIQUE NOT NULL,
+    name         TEXT         NOT NULL,
+    nickname     VARCHAR(20)  UNIQUE NOT NULL,
+    email        VARCHAR(50)  UNIQUE NOT NULL,
+    social_type  VARCHAR(6)   NOT NULL CHECK (social_type IN ('NAVER', 'KAKAO', 'GOOGLE')),
+    removed      BOOLEAN      NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    removed_at   TIMESTAMP    NULL
 );
 
 CREATE TABLE IF NOT EXISTS member_role
 (
-    id          BIGINT       AUTO_INCREMENT PRIMARY KEY,
+    id          BIGSERIAL    PRIMARY KEY,
     member_id   BIGINT       NOT NULL,
-    role_type   VARCHAR(20)  NOT NULL CHECK (role IN ('ROLE_USER', 'ROLE_ADMIN')),
+    role_type   VARCHAR(10)  NOT NULL CHECK (role_type IN ('ROLE_USER', 'ROLE_ADMIN')),
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS notify_message
 (
-    id           BIGINT        AUTO_INCREMENT PRIMARY KEY,
-    notify_type  VARCHAR(20)   NOT NULL CHECK (notify_type IN ('NOTICE', 'CHAT', 'REPLY', 'LIKES')),
-    content      VARCHAR(255)  NOT NULL,
-    url          VARCHAR(255)  NOT NULL,
-    activated    TINYINT(1)    NOT NULL DEFAULT 0 CHECK (viewed IN (0, 1)),
-    created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expired_at   TIMESTAMP     GENERATED ALWAYS AS (
-        CASE
-            WHEN notify_type = 'NOTICE' THEN created_at + INTERVAL 7 DAY
-            ELSE NULL
-        END
-    ) STORED
+    id           BIGSERIAL   PRIMARY KEY,
+    notify_type  VARCHAR(6)  NOT NULL CHECK (notify_type IN ('NOTICE', 'CHAT', 'REPLY', 'LIKES')),
+    content      TEXT        NOT NULL,
+    url          TEXT        NOT NULL,
+    activated    BOOLEAN     NOT NULL DEFAULT TRUE,
+    created_at   TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expired_at   TIMESTAMP   NULL
 );
 
 CREATE TABLE IF NOT EXISTS notify_viewer
 (
-    notify_message_id  BIGINT      NOT NULL,
-    member_id          BIGINT      NOT NULL,
-    viewed             TINYINT(1)  NOT NULL DEFAULT 0 CHECK (viewed IN (0, 1)),
-    created_at         TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    viewed_at          TIMESTAMP   NULL,
+    notify_message_id  BIGINT     NOT NULL,
+    member_id          BIGINT     NOT NULL,
+    viewed             BOOLEAN    NOT NULL DEFAULT FALSE,
+    created_at         TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    viewed_at          TIMESTAMP  NULL,
     PRIMARY KEY (notify_message_id, member_id),
     FOREIGN KEY (notify_message_id) REFERENCES notify_message (id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
@@ -53,11 +46,11 @@ CREATE TABLE IF NOT EXISTS notify_viewer
 
 CREATE TABLE IF NOT EXISTS chat_room
 (
-    id          BIGINT      AUTO_INCREMENT PRIMARY KEY,
-    member_id   BIGINT      NOT NULL,
-    removed     TINYINT(1)  NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
-    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    removed_at  TIMESTAMP   NULL,
+    id          BIGSERIAL  PRIMARY KEY,
+    member_id   BIGINT     NOT NULL,
+    removed     BOOLEAN    NOT NULL DEFAULT FALSE,
+    created_at  TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    removed_at  TIMESTAMP  NULL,
     FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
@@ -68,7 +61,7 @@ CREATE TABLE IF NOT EXISTS chat_participant
     created_at    TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (chat_room_id, member_id),
     FOREIGN KEY (chat_room_id) REFERENCES chat_room (id) ON DELETE CASCADE,
-    FOREIGN KEY (member_id) REFERENCES member (id)
+    FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS chat_black_list
@@ -83,14 +76,14 @@ CREATE TABLE IF NOT EXISTS chat_black_list
 
 CREATE TABLE IF NOT EXISTS chat_message
 (
-    id            BIGINT        AUTO_INCREMENT PRIMARY KEY,
-    chat_room_id  BIGINT        NOT NULL,
-    member_id     BIGINT        NOT NULL,
-    content       VARCHAR(255)  NOT NULL DEFAULT '',
-    imaged        TINYINT(1)    NOT NULL DEFAULT 0 CHECK (is_photo IN (0, 1)),
-    removed       TINYINT(1)    NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
-    created_at    TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    removed_at    TIMESTAMP     NULL,
+    id            BIGSERIAL  PRIMARY KEY,
+    chat_room_id  BIGINT     NOT NULL,
+    member_id     BIGINT     NOT NULL,
+    content       TEXT       NOT NULL DEFAULT '',
+    imaged        BOOLEAN    NOT NULL DEFAULT FALSE,
+    removed       BOOLEAN    NOT NULL DEFAULT FALSE,
+    created_at    TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    removed_at    TIMESTAMP  NULL,
     FOREIGN KEY (chat_room_id) REFERENCES chat_room (id) ON DELETE CASCADE,
     FOREIGN KEY (member_id) REFERENCES member (id)
 );
@@ -107,36 +100,33 @@ CREATE TABLE IF NOT EXISTS chat_message_read
 
 CREATE TABLE IF NOT EXISTS post_category
 (
-    id           BIGINT        AUTO_INCREMENT PRIMARY KEY,
-    member_id    BIGINT        NOT NULL,
+    id           BIGSERIAL     PRIMARY KEY,
     name         VARCHAR(100)  UNIQUE NOT NULL,
-    description  VARCHAR(255)  NOT NULL DEFAULT '',
-    created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (member_id) REFERENCES member (id)
+    description  TEXT          NOT NULL DEFAULT '',
+    created_at   TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS post
 (
-    id                BIGINT       AUTO_INCREMENT PRIMARY KEY,
+    id                BIGSERIAL    PRIMARY KEY,
     member_id         BIGINT       NOT NULL,
     post_category_id  BIGINT       NOT NULL,
     title             VARCHAR(50)  NOT NULL,
     content           TEXT         NOT NULL DEFAULT '',
-    removed           TINYINT(1)   NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
+    removed           BOOLEAN      NOT NULL DEFAULT FALSE,
     created_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at        TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     removed_at        TIMESTAMP    NULL,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE,
-    FOREIGN KEY (post_category_id) REFERENCES post_category (id) ON DELETE CASCADE,
-    FULLTEXT INDEX f_idx_post_title (title),
-    FULLTEXT INDEX f_idx_post_title_content (title, content)
+    FOREIGN KEY (post_category_id) REFERENCES post_category (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS post_metrics
 (
-    id          BIGINT  NOT NULL PRIMARY KEY,
+    post_id     BIGINT  PRIMARY KEY,
     view_count  BIGINT  NOT NULL DEFAULT 0,
-    like_count  BIGINT  NOT NULL DEFAULT 0
+    like_count  BIGINT  NOT NULL DEFAULT 0,
+    FOREIGN KEY (post_id) REFERENCES post (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS post_scrap
@@ -161,12 +151,12 @@ CREATE TABLE IF NOT EXISTS post_likes
 
 CREATE TABLE IF NOT EXISTS vote_post
 (
-    id          BIGINT      AUTO_INCREMENT PRIMARY KEY,
+    id          BIGSERIAL   PRIMARY KEY,
     member_id   BIGINT      NOT NULL,
-    ended       TINYINT(1)  NOT NULL DEFAULT 0 CHECK (vote_ended IN (0, 1)),
-    removed     TINYINT(1)  NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
+    ended       BOOLEAN     NOT NULL DEFAULT FALSE,
+    removed     BOOLEAN     NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ended_at    TIMESTAMP   NOT NULL,
     removed_at  TIMESTAMP   NULL,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
@@ -184,19 +174,20 @@ CREATE TABLE IF NOT EXISTS vote_post_scrap
 
 CREATE TABLE IF NOT EXISTS vote_post_metrics
 (
-    id          BIGINT  NOT NULL PRIMARY KEY,
-    view_count  BIGINT  NOT NULL DEFAULT 0,
-    like_count  BIGINT  NOT NULL DEFAULT 0
+    vote_post_id  BIGINT  PRIMARY KEY,
+    view_count    BIGINT  NOT NULL DEFAULT 0,
+    like_count    BIGINT  NOT NULL DEFAULT 0,
+    FOREIGN KEY (vote_post_id) REFERENCES vote_post (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS vote_post_item
 (
-    id            BIGINT      AUTO_INCREMENT PRIMARY KEY,
-    vote_post_id  BIGINT      NOT NULL,
-    position      TINYINT(1)  NOT NULL CHECK (position IN (1, 2)),
-    won           TINYINT(1)  NOT NULL DEFAULT 0 CHECK (won IN (0, 1)),
-    created_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    id            BIGSERIAL  PRIMARY KEY,
+    vote_post_id  BIGINT     NOT NULL,
+    position      SMALLINT   NOT NULL CHECK (position IN (1, 2)),
+    won           BOOLEAN    NOT NULL DEFAULT FALSE,
+    created_at    TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP  NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (vote_post_id) REFERENCES vote_post (id) ON DELETE CASCADE
 );
 
@@ -212,48 +203,45 @@ CREATE TABLE IF NOT EXISTS vote_post_item_likes
 
 CREATE TABLE IF NOT EXISTS plan_post_city
 (
-    id    BIGINT       AUTO_INCREMENT PRIMARY KEY,
+    id    BIGSERIAL    PRIMARY KEY,
     name  VARCHAR(50)  UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS plan_post
 (
-    id                 BIGINT         AUTO_INCREMENT PRIMARY KEY,
+    id                 BIGSERIAL      PRIMARY KEY,
     member_id          BIGINT         NOT NULL,
     plan_post_city_id  BIGINT         NOT NULL,
     title              VARCHAR(50)    NOT NULL,
-    summary            VARCHAR(255)   NOT NULL DEFAULT '',
-    total_rating       DECIMAL(3, 2)  NOT NULL DEFAULT 0.00 CHECK (total_rating BETWEEN 0.00 AND 5.00),
-    removed            TINYINT(1)     NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
+    summary            TEXT           NOT NULL DEFAULT '',
+    total_rating       NUMERIC(3, 2)  NOT NULL DEFAULT 0.00 CHECK (total_rating >= 0.00 AND total_rating <= 5.00),
+    removed            BOOLEAN        NOT NULL DEFAULT FALSE,
     created_at         TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at         TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at         TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     removed_at         TIMESTAMP      NULL,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE,
-    FOREIGN KEY (plan_post_city_id) REFERENCES plan_post_city (id) ON DELETE CASCADE,
-    FULLTEXT INDEX f_idx_plan_post_title (title),
-    FULLTEXT INDEX f_idx_plan_post_title_summary (title, summary)
+    FOREIGN KEY (plan_post_city_id) REFERENCES plan_post_city (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS plan_post_item
 (
-    id            BIGINT         AUTO_INCREMENT PRIMARY KEY,
-    plan_post_id  BIGINT         NOT NULL,
-    place_id      VARCHAR(100)   NOT NULL,
-    place_name    VARCHAR(255)   NOT NULL,
-    description   VARCHAR(255)   NOT NULL DEFAULT '',
-    coordinates   POINT          NOT NULL SRID 4326,
-    rating        DECIMAL(3, 2)  NOT NULL DEFAULT 0.00 CHECK (rating BETWEEN 0.00 AND 5.00),
-    removed       TINYINT(1)     NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
-    created_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at    TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    removed_at    TIMESTAMP      NULL,
-    previous_id   BIGINT         UNSIGNED NULL,
-    next_id       BIGINT         UNSIGNED NULL,
-    FOREIGN KEY (plan_post_id) REFERENCES plan_post (id) ON DELETE CASCADE,
-    FULLTEXT INDEX f_idx_plan_post_item_place_name (place_name),
-    FULLTEXT INDEX f_idx_plan_post_item_place_name_description (place_name, description),
-    SPATIAL INDEX s_idx_plan_post_coordinates (coordinates)
+    id            BIGSERIAL              PRIMARY KEY,
+    plan_post_id  BIGINT                 NOT NULL,
+    place_id      TEXT                   NOT NULL,
+    place_name    TEXT                   NOT NULL,
+    description   TEXT                   NOT NULL DEFAULT '',
+    coordinates   GEOMETRY(POINT, 4326)  NOT NULL,
+    rating        NUMERIC(3, 2)          NOT NULL DEFAULT 0.00 CHECK (rating >= 0.00 AND rating <= 5.00),
+    removed       BOOLEAN                NOT NULL DEFAULT FALSE,
+    created_at    TIMESTAMP              NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    TIMESTAMP              NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    removed_at    TIMESTAMP              NULL,
+    previous_id   BIGINT                 NULL,
+    next_id       BIGINT                 NULL,
+    FOREIGN KEY (plan_post_id) REFERENCES plan_post (id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_plan_post_item_coordinates_gist ON plan_post_item USING GIST (coordinates);
 
 CREATE TABLE IF NOT EXISTS plan_post_scrap
 (
@@ -277,19 +265,20 @@ CREATE TABLE IF NOT EXISTS plan_post_likes
 
 CREATE TABLE IF NOT EXISTS plan_post_metrics
 (
-    id          BIGINT  NOT NULL PRIMARY KEY,
-    view_count  BIGINT  NOT NULL DEFAULT 0,
-    like_count  BIGINT  NOT NULL DEFAULT 0
+    plan_post_id  BIGINT  PRIMARY KEY,
+    view_count    BIGINT  NOT NULL DEFAULT 0,
+    like_count    BIGINT  NOT NULL DEFAULT 0,
+    FOREIGN KEY (plan_post_id) REFERENCES plan_post (id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS photo
 (
-    id          BIGINT        AUTO_INCREMENT PRIMARY KEY,
+    id          BIGSERIAL     PRIMARY KEY,
     member_id   BIGINT        NULL,
     uuid        VARCHAR(255)  UNIQUE NOT NULL,
     filename    VARCHAR(255)  NOT NULL,
     extension   VARCHAR(255)  NOT NULL,
-    removed     TINYINT(1)    NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
+    removed     BOOLEAN       NOT NULL DEFAULT FALSE,
     created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     removed_at  TIMESTAMP     NULL,
     FOREIGN KEY (member_id) REFERENCES member (id)
@@ -367,13 +356,12 @@ CREATE TABLE IF NOT EXISTS photo_plan_post_item
 
 CREATE TABLE IF NOT EXISTS hashtag
 (
-    id          BIGINT        AUTO_INCREMENT PRIMARY KEY,
+    id          BIGSERIAL     PRIMARY KEY,
     member_id   BIGINT        NOT NULL,
     name        VARCHAR(100)  NOT NULL UNIQUE,
     created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (member_id) REFERENCES member (id),
-    FULLTEXT INDEX f_idx_hashtag_name (name)
+    updated_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
 CREATE TABLE IF NOT EXISTS hashtag_post
@@ -408,14 +396,14 @@ CREATE TABLE IF NOT EXISTS hashtag_plan_post
 
 CREATE TABLE IF NOT EXISTS reply
 (
-    id               BIGINT        AUTO_INCREMENT PRIMARY KEY,
+    id               BIGSERIAL     PRIMARY KEY,
     member_id        BIGINT        NOT NULL,
     parent_reply_id  BIGINT        NULL,
-    content          VARCHAR(255)  NOT NULL DEFAULT '',
-    updated          TINYINT(1)    NOT NULL DEFAULT 0 CHECK (updated IN (0, 1)),
-    removed          TINYINT(1)    NOT NULL DEFAULT 0 CHECK (removed IN (0, 1)),
+    content          TEXT          NOT NULL DEFAULT '',
+    updated          BOOLEAN       NOT NULL DEFAULT FALSE,
+    removed          BOOLEAN       NOT NULL DEFAULT FALSE,
     created_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     removed_at       TIMESTAMP     NULL,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE,
     FOREIGN KEY (parent_reply_id) REFERENCES reply (id) ON DELETE SET NULL
@@ -466,3 +454,4 @@ CREATE TABLE IF NOT EXISTS reply_metrics
     id          BIGINT  NOT NULL PRIMARY KEY,
     like_count  BIGINT  NOT NULL DEFAULT 0
 );
+
