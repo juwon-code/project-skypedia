@@ -35,14 +35,14 @@ public class AuthenticationSuccessHandlerImpl implements AuthenticationSuccessHa
 
             SocialType socialType = SocialType.fromString(registrationId);
 
-            MemberResponseDto.Login dto = socialLoginService.authenticate(attributes, socialType);
+            MemberResponseDto.SignIn dto = socialLoginService.authenticate(attributes, socialType);
 
             response.setStatus(HttpStatus.OK.value());
             response.setCharacterEncoding("UTF-8");
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
             response.getWriter().write(String.format(
                     "{ \"nickname\": \"%s\", \"profilePhotoUrl\": \"%s\", \"accessToken\": \"%s\" }",
-                    dto.nickname(), dto.profilePhotoUrl(), dto.accessToken()
+                    dto.nickname(), dto.photoUrl(), dto.accessToken()
             ));
         }
     }

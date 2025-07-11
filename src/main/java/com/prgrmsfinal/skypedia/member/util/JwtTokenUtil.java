@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtTokenUtil {
-    @Value("${JWT_SECRET_KEY}")
+    @Value("${jwt.secret.key}")
     private String secretKey;
 
     @Value("${jwt.access-token.expiration}")
@@ -73,12 +73,10 @@ public class JwtTokenUtil {
                 .getPayload();
     }
 
-    public String createAccessToken(Long memberId, List<RoleType> roleTypes) {
+    public String createAccessToken(Long memberId, List<String> roleTypeStrings) {
         Claims claims = Jwts.claims()
                 .subject(String.valueOf(memberId))
-                .add("roles", roleTypes.stream()
-                        .map(RoleType::toString)
-                        .toList())
+                .add("roles", roleTypeStrings)
                 .build();
 
         return createToken(claims, accessTokenExpiration);
