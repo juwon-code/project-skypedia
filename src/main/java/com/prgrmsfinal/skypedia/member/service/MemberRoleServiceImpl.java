@@ -3,41 +3,61 @@ package com.prgrmsfinal.skypedia.member.service;
 import com.prgrmsfinal.skypedia.global.constant.RoleType;
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.member.entity.MemberRole;
-import com.prgrmsfinal.skypedia.member.exception.MemberRoleException;
+import com.prgrmsfinal.skypedia.member.exception.AlreadyGrantedException;
+import com.prgrmsfinal.skypedia.member.exception.CannotRevokeException;
+import com.prgrmsfinal.skypedia.member.repository.MemberRoleQueryRepository;
 import com.prgrmsfinal.skypedia.member.repository.MemberRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 public class MemberRoleServiceImpl implements MemberRoleService {
     private final MemberRoleRepository memberRoleRepository;
+    private final MemberRoleQueryRepository memberRoleQueryRepository;
 
     @Autowired
-    public MemberRoleServiceImpl(MemberRoleRepository memberRoleRepository) {
+    public MemberRoleServiceImpl(MemberRoleRepository memberRoleRepository
+            , MemberRoleQueryRepository memberRoleQueryRepository) {
         this.memberRoleRepository = memberRoleRepository;
+        this.memberRoleQueryRepository = memberRoleQueryRepository;
     }
 
     @Override
-    public List<RoleType> getRolesByMemberId(Long memberId) {
-        List<RoleType> roleTypes = memberRoleRepository.findRoleTypesByMemberId(memberId);
+    @Transactional(readOnly = true)
+    public List<RoleType> getRoleTypes(Long memberId) {
+        List<RoleType> roles = memberRoleQueryRepository.findRoleTypesByMemberId(memberId);
 
-        if (roleTypes == null || roleTypes.isEmpty()) {
-            throw new MemberRoleException("해당 회원에 역할이 배정되지 않았습니다.", HttpStatus.NOT_FOUND);
+        if (roles == null || roles.isEmpty()) {
+            throw new NoSuchElementException();
         }
 
-        return roleTypes;
+        return roles;
     }
 
     @Override
-    public MemberRole save(Member member, RoleType roleType) {
-        MemberRole memberRole = MemberRole.builder()
+    @Transactional
+    public void create(Member member, RoleType roleType) {
+        if (memberRoleQueryRepository.existsByMemberIdAndRoleType(member.getId(), roleType)) {
+            throw new AlreadyGrantedException();
+        }
+
+        memberRoleRepository.save(MemberRole.builder()
                 .member(member)
                 .roleType(roleType)
-                .build();
+                .build()
+        );
+    }
 
-        return memberRoleRepository.save(memberRole);
+    @Override
+    @Transactional
+    public void delete(Member member, RoleType roleType) {
+        if (!memberRoleQueryRepository.existsByMemberIdAndRoleType(member.getId(), roleType)) {
+            throw new CannotRevokeException();
+        }
+
+        memberRoleQueryRepository.deleteByMemberIdAndRoleType(member.getId(), roleType);
     }
 }

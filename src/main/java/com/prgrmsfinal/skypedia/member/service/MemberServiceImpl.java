@@ -7,26 +7,27 @@ import com.prgrmsfinal.skypedia.global.dto.SearchRequestDto;
 import com.prgrmsfinal.skypedia.global.dto.SearchResponseDto;
 import com.prgrmsfinal.skypedia.global.exception.SearchNotFoundException;
 import com.prgrmsfinal.skypedia.member.entity.MemberDocument;
-import com.prgrmsfinal.skypedia.member.dto.MemberInternalDto;
 import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
 import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.member.entity.MemberRole;
-import com.prgrmsfinal.skypedia.member.exception.InvalidCommandException;
-import com.prgrmsfinal.skypedia.member.exception.MemberException;
+import com.prgrmsfinal.skypedia.member.exception.CannotRestoreMemberException;
+import com.prgrmsfinal.skypedia.member.exception.MemberNotFoundException;
 import com.prgrmsfinal.skypedia.member.exception.NicknameConflictException;
+import com.prgrmsfinal.skypedia.member.exception.WithdrawnMemberException;
 import com.prgrmsfinal.skypedia.member.repository.MemberDocumentRepository;
+import com.prgrmsfinal.skypedia.member.repository.MemberQueryRepository;
 import com.prgrmsfinal.skypedia.member.repository.MemberRepository;
 import com.prgrmsfinal.skypedia.member.util.SecurityUtil;
 import com.prgrmsfinal.skypedia.photo.dto.PhotoResponseDto;
-import com.prgrmsfinal.skypedia.photo.service.PhotoProfileService;
+import com.prgrmsfinal.skypedia.photo.entity.PhotoMember;
+import com.prgrmsfinal.skypedia.photo.service.PhotoMemberSerivce;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,174 +39,234 @@ import java.util.function.Consumer;
 @Slf4j
 public class MemberServiceImpl implements MemberService{
     private final MemberRepository memberRepository;
+    private final MemberQueryRepository memberQueryRepository;
     private final MemberDocumentRepository memberDocumentRepository;
     private final MemberRoleService memberRoleService;
-    private final PhotoProfileService photoProfileService;
+    private final PhotoMemberSerivce photoMemberSerivce;
     private final SecurityUtil securityUtil;
-    private final RefreshTokenService refreshTokenService;
+    private final JwtTokenService jwtTokenService;
 
     @Autowired
     public MemberServiceImpl(MemberRepository memberRepository
+            , MemberQueryRepository memberQueryRepository
             , MemberDocumentRepository memberDocumentRepository
             , MemberRoleService memberRoleService
-            , PhotoProfileService photoProfileService
+            , PhotoMemberSerivce photoMemberSerivce
             , SecurityUtil securityUtil
-            , RefreshTokenService refreshTokenService
+            , JwtTokenService jwtTokenService
     ) {
         this.memberRepository = memberRepository;
+        this.memberQueryRepository = memberQueryRepository;
         this.memberDocumentRepository = memberDocumentRepository;
         this.memberRoleService = memberRoleService;
-        this.photoProfileService = photoProfileService;
+        this.photoMemberSerivce = photoMemberSerivce;
         this.securityUtil = securityUtil;
-        this.refreshTokenService = refreshTokenService;
+        this.jwtTokenService = jwtTokenService;
     }
 
+    @Override
     @Transactional
-    @Override
-    public Member create(MemberInternalDto.Create dto) {
-        Member savedMember = memberRepository.save(
-                Member.builder()
-                .oauthId(dto.oauthId())
-                .name(dto.name())
-                .nickname(dto.nickname())
-                .email(dto.email())
-                .build()
-        );
+    public MemberResponseDto.Info create(MemberRequestDto.SocialInfo socialInfo) {
+        Member member = Member.builder()
+                .oauthId(socialInfo.oauthId())
+                .name(socialInfo.name())
+                .email(socialInfo.email())
+                .nickname(generateRandomNickname())
+                .photoMember(null)
+                .socialType(socialInfo.socialType())
+                .build();
 
-        MemberRole savedRole = memberRoleService.save(savedMember, RoleType.USER);
+        MemberRole role = MemberRole.builder()
+                .member(member)
+                .roleType(RoleType.USER)
+                .build();
 
-        memberDocumentRepository.save(MemberDocument.of(savedMember, List.of(RoleType.USER)));
+        member.grantRole(role);
 
-        return savedMember;
-    }
+        Member savedMember = memberRepository.save(member);
 
-    @Transactional(readOnly = true)
-    private Member getMemberById(Long memberId) {
-        return memberRepository.findMemberById(memberId)
-                .orElseThrow(() -> new MemberException("해당 ID의 회원은 존재하지 않습니다.", HttpStatus.NOT_FOUND));
-    }
+        saveDocument(savedMember, List.of(role.getRoleType()));
 
-    @Transactional(readOnly = true)
-    private Member getMemberByIdAndStatus(Long memberId, boolean removed) {
-        return memberRepository.findMemberByIdAndStatus(memberId, removed)
-                .orElseThrow(() -> new MemberException("해당 ID의 회원은 존재하지 않습니다.", HttpStatus.NOT_FOUND));
-    }
-
-    @Transactional(readOnly = true)
-    private Member getMemberProfileByIdAndStatus(Long memberId, boolean removed) {
-        return memberRepository.findMemberWithRolesAndPhotoByIdAndStatus(memberId, removed)
-                .orElseThrow(() -> new MemberException("해당 ID의 회원의 프로필이 존재하지 않습니다.", HttpStatus.NOT_FOUND));
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public MemberInternalDto.Profile getProfileByOAuthId(String oauthId) {
-        Member member = memberRepository.findMemberWithRolesAndPhotoByOauthId(oauthId)
-                .orElseThrow(NoSuchElementException::new);
-
-        boolean isAdmin = memberRoleService.getRolesByMemberId(securityUtil.getCurrentMemberId()).contains(RoleType.ADMIN);
-
-        if (!isAdmin && member.isRemoved()) {
-            throw new MemberException("해당 회원은 탈퇴 유예기간에 있는 회원입니다.", HttpStatus.BAD_REQUEST);
-        }
-
-        List<RoleType> roleTypes = member.getMemberRoles().stream()
-                .map(MemberRole::getRoleType).toList();
-
-        String profilePhotoUrl = photoProfileService.getReadUrl(member.getPhotoProfile());
-
-        return MemberInternalDto.Profile.builder()
-                .id(member.getId())
-                .nickname(member.getNickname())
-                .profilePhotoUrl(profilePhotoUrl)
-                .roleTypes(roleTypes)
+        return MemberResponseDto.Info.builder()
+                .id(savedMember.getId())
+                .nickname(savedMember.getNickname())
+                .roleTypes(List.of(role.getRoleType()))
+                .photoUrl(null)
                 .build();
     }
 
-    @Transactional(readOnly = true)
     @Override
-    public SearchResponseDto.Pagination<MemberDocument> search(SearchRequestDto.Member requestDto) {
+    @Transactional(readOnly = true)
+    public MemberResponseDto.Info getInfo(String oauthId) {
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .oauthId(oauthId)
+                        .build()
+        );
+
+        if (member.isRemoved()) {
+            throw new WithdrawnMemberException();
+        }
+
+        return MemberResponseDto.Info.builder()
+                .id(member.getId())
+                .nickname(member.getNickname())
+                .roleTypes(member.getRoles().stream().map(MemberRole::getRoleType).toList())
+                .photoUrl(photoMemberSerivce.getReadUrl(member.getId()))
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MemberResponseDto.Profile getMyProfile() {
+        Long memberId = securityUtil.getCurrentMemberId();
+
+        MemberResponseDto.Profile result = getProfile(memberId);
+
+        if (result.removed()) {
+            throw new WithdrawnMemberException();
+        }
+
+        return result;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public MemberResponseDto.Profile getProfile(Long memberId) {
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .memberId(memberId)
+                        .build()
+        );
+
+        return MemberResponseDto.Profile.builder()
+                .nickname(member.getNickname())
+                .email(member.getEmail())
+                .socialType(member.getSocialType())
+                .photoUrl(photoMemberSerivce.getReadUrl(member.getId()))
+                .removed(member.isRemoved())
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SearchResponseDto.Pagination<MemberResponseDto.SearchProfile> search(SearchRequestDto.Member requestDto) {
         String keyword = requestDto.keyword();
         SearchOption option = requestDto.searchOption();
         SortType sortType = requestDto.sortType();
         Pageable pageable = PageRequest.of(requestDto.page(), 20);
 
-        SearchHits<MemberDocument> searchHits = memberDocumentRepository.search(keyword, option, sortType, pageable);
+        SearchHits<MemberDocument> searchHits = memberDocumentRepository.findBy(keyword, option, sortType, pageable);
 
         if (!searchHits.hasSearchHits()) {
             throw new SearchNotFoundException();
         }
 
-        return SearchResponseDto.Pagination.<MemberDocument>builder()
+        List<MemberDocument> contents = searchHits.get().map(SearchHit::getContent).toList();
+
+        List<Long> memberIds = contents.stream().map(MemberDocument::getId).toList();
+
+        Map<Long, String> photoUrls = photoMemberSerivce.getReadUrls(memberIds);
+
+        return SearchResponseDto.Pagination.<MemberResponseDto.SearchProfile>builder()
                 .page(pageable.getPageNumber())
                 .totalPages((int) Math.ceil((double) searchHits.getTotalHits() / pageable.getPageSize()))
                 .totalCount(searchHits.getTotalHits())
                 .isFirst(pageable.getPageNumber() == 0)
                 .isLast(pageable.getOffset() + searchHits.getSearchHits().size() >= searchHits.getTotalHits())
-                .data(searchHits.get().map(SearchHit::getContent).toList())
-                .build();
-    }
-
-    @Transactional(readOnly = true)
-    @Override
-    public MemberResponseDto.ReadProfile getMyProfile() {
-        Long memberId = securityUtil.getCurrentMemberId();
-        Member member = getMemberProfileByIdAndStatus(memberId, false);
-
-        String profilePhotoUrl = photoProfileService.getReadUrl(member.getPhotoProfile());
-
-        return MemberResponseDto.ReadProfile.builder()
-                .nickname(member.getNickname())
-                .email(member.getEmail())
-                .profilePhotoUrl(profilePhotoUrl)
-                .socialType(member.getSocialType())
+                .data(contents.stream().map(content -> MemberResponseDto.SearchProfile.builder()
+                        .id(content.getId())
+                        .nickname(content.getNickname())
+                        .email(content.getEmail())
+                        .socialType(content.getSocialType())
+                        .photoUrl(photoUrls.getOrDefault(content.getId(), null))
+                        .roleTypes(content.getRoles())
+                        .createdAt(content.getCreatedAt())
+                        .removedAt(content.getRemovedAt())
+                        .build()
+                ).toList())
                 .build();
     }
 
     @Override
-    public MemberResponseDto.ChangeProfile changeMyProfile(MemberRequestDto.ChangeProfile changeDto) {
-        return changeProfile(securityUtil.getCurrentMemberId(), changeDto);
-    }
-
     @Transactional
+    public MemberResponseDto.Modify modifyMe(MemberRequestDto.Modify requestDto) {
+        Long memberId = securityUtil.getCurrentMemberId();
+
+        return modify(memberId, requestDto);
+    }
+
     @Override
-    public MemberResponseDto.ChangeProfile changeProfile(Long memberId, MemberRequestDto.ChangeProfile changeDto) {
-        Member member = getMemberByIdAndStatus(memberId, false);
-        String nickname = changeDto.nickname();
+    @Transactional
+    public MemberResponseDto.Modify modify(Long memberId, MemberRequestDto.Modify requestDto) {
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .memberId(memberId)
+                        .build()
+        );
 
+        if (member.isRemoved()) {
+            throw new WithdrawnMemberException();
+        }
+
+        String nickname = requestDto.nickname();
         if (nickname != null) {
-            changeNickname(member, nickname);
+            if (memberQueryRepository.existsByNickname(nickname)) {
+                throw new NicknameConflictException();
+            }
 
+            member.setNickname(nickname);
             updateDocument(memberId, document -> document.setNickname(nickname));
         }
 
-        PhotoResponseDto.ProfileUpload uploadResponseDto = null;
-        if (changeDto.profilePhotoData() != null) {
-            uploadResponseDto = photoProfileService.upload(member, changeDto.profilePhotoData());
-            if (uploadResponseDto.photoProfile() != null) {
-                member.changePhotoProfile(uploadResponseDto.photoProfile());
-            }
+        PhotoResponseDto.Upload<PhotoMember> uploadData = null;
+        if (requestDto.photoData() != null) {
+            uploadData = photoMemberSerivce.upload(member, requestDto.photoData());
+            member.setPhotoMember(uploadData.photoMember());
         }
 
-        return MemberResponseDto.ChangeProfile.builder()
+        return MemberResponseDto.Modify.builder()
                 .nickname(nickname)
-                .uuid(uploadResponseDto != null ? uploadResponseDto.uuid() : null)
-                .uploadUrl(uploadResponseDto != null ? uploadResponseDto.uploadUrl() : null)
+                .uuid(uploadData != null ? uploadData.uuid() : null)
+                .uploadUrl(uploadData != null ? uploadData.uploadUrl() : null)
                 .build();
     }
 
-    @Transactional
     @Override
-    public MemberResponseDto.Withdraw removeMe() {
+    @Transactional
+    public MemberResponseDto.Remove removeMe() {
         Long memberId = securityUtil.getCurrentMemberId();
 
-        LocalDateTime removedAt = remove(memberId);
+        MemberResponseDto.Remove responseDto = remove(memberId);
 
         SecurityContextHolder.clearContext();
 
+        return responseDto;
+    }
+
+    @Override
+    @Transactional
+    public MemberResponseDto.Remove remove(Long memberId) {
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .memberId(memberId)
+                        .build()
+        );
+
+        if (member.isRemoved()) {
+            throw new WithdrawnMemberException();
+        }
+
+        LocalDateTime removedAt = LocalDateTime.now();
+
+        member.setRemoved(true);
+        member.setRemovedAt(removedAt);
+
         updateDocument(memberId, document -> document.setRemovedAt(removedAt));
 
-        return MemberResponseDto.Withdraw.builder()
+        jwtTokenService.deleteRefreshToken(member.getId());
+
+        return MemberResponseDto.Remove.builder()
                 .removedAt(removedAt)
                 .willDeletedAt(removedAt.plusDays(30))
                 .build();
@@ -213,95 +274,86 @@ public class MemberServiceImpl implements MemberService{
 
     @Transactional
     @Override
-    public LocalDateTime remove(Long memberId) {
-        Member member = getMemberByIdAndStatus(memberId, false);
-
-        member.remove();
-
-        refreshTokenService.delete(member.getId());
-
-        return member.getRemovedAt();
-    }
-
-    @Transactional
-    @Override
-    public void reset(Long memberId) {
-        Member member = getMemberById(memberId);
-
-        String nickname = generateRandomNickname();
-
-        member.changeNickname(nickname);
-
-        updateDocument(memberId, document -> document.setNickname(nickname));
-
-        photoProfileService.purge(memberId);
-    }
-
-    @Transactional
-    @Override
     public void restore(Long memberId) {
-        Member member = getMemberByIdAndStatus(memberId, true);
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .memberId(memberId)
+                        .build()
+        );
 
-        updateDocument(memberId, document -> document.setRemovedAt(null));
-
-        member.restore();
-    }
-
-    @Transactional
-    @Override
-    public void purgeRemovedMembers() {
-        LocalDateTime cutoff = LocalDateTime.now().minusDays(30L);
-
-        List<Long> memberIds = memberRepository.findPurgeableMemberIds(cutoff);
-
-        photoProfileService.purgeAll(memberIds);
-
-        Long count = memberRepository.deleteAllByIds(memberIds);
-
-        memberDocumentRepository.deleteAll(memberIds);
-
-        log.info("{}개의 회원 데이터가 영구적으로 삭제되었습니다.", count);
-    }
-
-    @Transactional
-    @Override
-    public String changeRole(Long memberId, MemberRequestDto.ChangeRole requestDto) {
-        Member member = getMemberById(memberId);
-        RoleType roleType = RoleType.valueOf(requestDto.roleName());
-        String message = "";
-
-        switch (requestDto.command()) {
-            case "ADD" -> {
-                member.addRole(roleType);
-                message = "해당 회원에게 새로운 역할을 부여했습니다.";
-            }
-            case "REMOVE" -> {
-                member.removeRole(roleType);
-                message = "해당 회원에게 해당 역할을 제거했습니다.";
-            }
-            default -> throw new InvalidCommandException();
+        if (!member.isRemoved()) {
+            throw new CannotRestoreMemberException();
         }
 
-        UpdateRolesToDocument(member);
+        member.setRemoved(false);
+        member.setRemovedAt(null);
 
-        return message;
+        updateDocument(memberId, document -> document.setRemovedAt(null));
     }
 
     @Override
-    public String generateRandomNickname() {
+    @Transactional
+    public void deleteRemovedMembers() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(30L);
+
+        List<Long> memberIds = memberQueryRepository.deleteAllByCutoff(cutoff);
+
+        memberDocumentRepository.deleteAll(memberIds);
+    }
+
+    @Override
+    @Transactional
+    public void grantAdmin(Long memberId) {
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .memberId(memberId)
+                        .removed(false)
+                        .build()
+        );
+
+        memberRoleService.create(member, RoleType.ADMIN);
+
+        updateDocument(memberId, document -> {
+            List<String> roles = document.getRoles();
+            roles.add(RoleType.ADMIN.name());
+            document.setRoles(roles);
+        });
+    }
+
+    @Override
+    @Transactional
+    public void revokeAdmin(Long memberId) {
+        Member member = getMemberBy(
+                MemberRequestDto.SearchOptions.builder()
+                        .memberId(memberId)
+                        .removed(false)
+                        .build()
+        );
+
+        memberRoleService.delete(member, RoleType.ADMIN);
+
+        updateDocument(memberId, document -> {
+            List<String> roles = document.getRoles();
+            roles.remove(RoleType.ADMIN.name());
+            document.setRoles(roles);
+        });
+    }
+
+    private Member getMemberBy(MemberRequestDto.SearchOptions options) {
+        return memberQueryRepository.findOneBy(options)
+                .orElseThrow(MemberNotFoundException::new);
+    }
+
+    private String generateRandomNickname() {
         return String.format("User%s+%s"
                 , UUID.randomUUID().toString().substring(0, 10)
                 , UUID.randomUUID().toString().substring(0, 5));
     }
 
-    private void changeNickname(Member member, String nickname) {
-        if (memberRepository.existsByNickname(nickname)) {
-            throw new NicknameConflictException();
-        }
+    private void saveDocument(Member member, List<RoleType> roles) {
+        MemberDocument memberDocument = MemberDocument.of(member, roles);
 
-        member.changeNickname(nickname);
-
-        updateDocument(member.getId(), document -> document.setNickname(nickname));
+        memberDocumentRepository.save(memberDocument);
     }
 
     private void updateDocument(Long memberId, Consumer<MemberDocument> updater) {
@@ -310,12 +362,5 @@ public class MemberServiceImpl implements MemberService{
         updater.accept(memberDocument);
 
         memberDocumentRepository.save(memberDocument);
-    }
-
-    private void UpdateRolesToDocument(Member member) {
-        List<String> roles = member.getMemberRoles().stream()
-                .map(role -> role.getRoleType().name()).toList();
-
-        updateDocument(member.getId(), document -> document.setRoles(roles));
     }
 }

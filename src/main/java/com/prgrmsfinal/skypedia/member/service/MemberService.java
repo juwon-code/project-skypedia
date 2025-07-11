@@ -2,38 +2,33 @@ package com.prgrmsfinal.skypedia.member.service;
 
 import com.prgrmsfinal.skypedia.global.dto.SearchRequestDto;
 import com.prgrmsfinal.skypedia.global.dto.SearchResponseDto;
-import com.prgrmsfinal.skypedia.member.entity.MemberDocument;
-import com.prgrmsfinal.skypedia.member.dto.MemberInternalDto;
 import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
 import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
-import com.prgrmsfinal.skypedia.member.entity.Member;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 public interface MemberService {
-	Member create(MemberInternalDto.Create member);
+	MemberResponseDto.Info create(MemberRequestDto.SocialInfo socialInfo);
 
-	MemberInternalDto.Profile getProfileByOAuthId(String oauthId);
+	MemberResponseDto.Info getInfo(String oauthId);
 
-	MemberResponseDto.ReadProfile getMyProfile();
+	MemberResponseDto.Profile getMyProfile();
 
-	MemberResponseDto.ChangeProfile changeMyProfile(MemberRequestDto.ChangeProfile changeDto);
+	MemberResponseDto.Profile getProfile(Long memberId);
 
-	MemberResponseDto.ChangeProfile changeProfile(Long memberId, MemberRequestDto.ChangeProfile changeDto);
+	SearchResponseDto.Pagination<MemberResponseDto.SearchProfile> search(SearchRequestDto.Member requestDto);
 
-	MemberResponseDto.Withdraw removeMe();
+	MemberResponseDto.Modify modifyMe(MemberRequestDto.Modify requestDto);
 
-	SearchResponseDto.Pagination<MemberDocument> search(SearchRequestDto.Member requestDto);
+	MemberResponseDto.Modify modify(Long memberId, MemberRequestDto.Modify requestDto);
 
-	LocalDateTime remove(Long memberId);
+	MemberResponseDto.Remove removeMe();
 
-	void reset(Long memberId);
+	MemberResponseDto.Remove remove(Long memberId);
 
 	void restore(Long memberId);
 
-	String changeRole(Long memberId, MemberRequestDto.ChangeRole requestDto);
+	void deleteRemovedMembers();
 
-	String generateRandomNickname();
+	void grantAdmin(Long memberId);
 
-	void purgeRemovedMembers();
+	void revokeAdmin(Long memberId);
 }
