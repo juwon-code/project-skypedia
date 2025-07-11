@@ -1,7 +1,6 @@
 package com.prgrmsfinal.skypedia.member.filter;
 
-import com.prgrmsfinal.skypedia.global.constant.RoleType;
-import com.prgrmsfinal.skypedia.member.service.RefreshTokenService;
+import com.prgrmsfinal.skypedia.member.service.JwtTokenService;
 import com.prgrmsfinal.skypedia.member.util.JwtTokenUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -24,12 +23,12 @@ import java.util.List;
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtTokenUtil jwtTokenUtil;
-    private final RefreshTokenService refreshTokenService;
+    private final JwtTokenService jwtTokenService;
 
     @Autowired
-    public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil, RefreshTokenService refreshTokenService) {
+    public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil, JwtTokenService jwtTokenService) {
         this.jwtTokenUtil = jwtTokenUtil;
-        this.refreshTokenService = refreshTokenService;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @Override
@@ -46,9 +45,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             Long memberId = Long.parseLong(accessClaims.getSubject());
 
-            List<RoleType> roleTypes = accessClaims.get("roles", List.class);
+            List<String> roleTypes = accessClaims.get("roles", List.class);
 
-            String refreshToken = refreshTokenService.get(memberId);
+            String refreshToken = jwtTokenService.getRefreshToken(memberId);
 
             if (refreshToken == null) {
                 throw new ExpiredJwtException(null, null, null);

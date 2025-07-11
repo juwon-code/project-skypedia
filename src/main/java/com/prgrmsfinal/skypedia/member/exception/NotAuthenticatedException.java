@@ -5,6 +5,6 @@ import org.springframework.http.HttpStatus;
 
 public class NotAuthenticatedException extends AbstractBaseException {
     public NotAuthenticatedException() {
-        super("로그인이 필요합니다.", HttpStatus.UNAUTHORIZED);
+        super("해당 서비스를 사용하기 위해서는 로그인이 필요합니다.", HttpStatus.UNAUTHORIZED);
     }
 }
