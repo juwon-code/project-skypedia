@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class PhotoProfile extends AbstractAssociationEntity<PhotoProfileId, Photo, Member> {
+public class PhotoMember extends AbstractAssociationEntity<PhotoProfileId, Photo, Member> {
     @ManyToOne(cascade = CascadeType.REMOVE)
     @MapsId("photoId")
     @JoinColumn(name = "photo_id", referencedColumnName = "id", nullable = false)
@@ -24,7 +24,7 @@ public class PhotoProfile extends AbstractAssociationEntity<PhotoProfileId, Phot
     private Member member;
 
     @Builder
-    public PhotoProfile(Photo photo, Member member) {
+    public PhotoMember(Photo photo, Member member) {
         super.initializeId(photo, member);
         this.photo = photo;
         this.member = member;

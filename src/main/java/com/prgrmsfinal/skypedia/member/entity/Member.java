@@ -1,21 +1,23 @@
 package com.prgrmsfinal.skypedia.member.entity;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
-import com.prgrmsfinal.skypedia.global.constant.RoleType;
 import com.prgrmsfinal.skypedia.global.constant.SocialType;
-import com.prgrmsfinal.skypedia.photo.entity.PhotoProfile;
+import com.prgrmsfinal.skypedia.photo.entity.PhotoMember;
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
+@Setter
 public class Member {
 	@Id
 	@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "member_id_seq")
 	@SequenceGenerator(name = "member_id_seq", sequenceName = "member_id_seq")
+	@Setter(AccessLevel.NONE)
 	private Long id;
 
 	@Column(unique = true, nullable = false)
@@ -45,60 +47,27 @@ public class Member {
 
 	private LocalDateTime removedAt;
 
-	@OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
-	private List<MemberRole> memberRoles;
+	@OneToOne(cascade = CascadeType.ALL)
+	private PhotoMember photoMember;
 
-	@OneToOne(mappedBy = "member", fetch = FetchType.LAZY)
-	private PhotoProfile photoProfile;
+	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<MemberRole> roles;
 
 	@Builder
-	public Member(String oauthId, String name, String nickname, String email) {
+	public Member(String oauthId, String name, String nickname, String email, SocialType socialType
+			, PhotoMember photoMember, List<MemberRole> roles) {
 		this.oauthId = oauthId;
 		this.name = name;
 		this.nickname = nickname;
+		this.socialType = socialType;
 		this.email = email;
 		this.removed = false;
 		this.removedAt = null;
+		this.photoMember = photoMember;
+		this.roles = roles != null ? roles : new ArrayList<>();
 	}
 
-	public void remove() {
-		this.removed = true;
-		this.removedAt = LocalDateTime.now();
-	}
-
-	public void restore() {
-		this.removed = false;
-		this.removedAt = null;
-	}
-
-	public void changeNickname(String nickname) {
-		this.nickname = nickname;
-	}
-
-	public void changePhotoProfile(PhotoProfile photoProfile) {
-		this.photoProfile = photoProfile;
-	}
-
-	public boolean addRole(RoleType roleType) {
-		boolean isExists = memberRoles.stream()
-				.anyMatch(memberRole -> memberRole.getRoleType().equals(roleType));
-
-		if (isExists) {
-			return false;
-		}
-
-		MemberRole memberRole = MemberRole.builder()
-				.member(this)
-				.roleType(roleType)
-				.build();
-
-		this.memberRoles.add(memberRole);
-		return true;
-	}
-
-	public boolean removeRole(RoleType roleType) {
-		boolean isSucceed = this.memberRoles.removeIf(memberRole -> memberRole.getRoleType().equals(roleType));
-
-		return isSucceed;
+	public void grantRole(MemberRole role) {
+		this.roles.add(role);
 	}
 }
