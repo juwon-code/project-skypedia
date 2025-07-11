@@ -11,7 +11,7 @@ import java.util.List;
 public interface MemberDocumentRepository {
     MemberDocument get(Long memberId);
 
-    SearchHits<MemberDocument> search(String keyword, SearchOption option, SortType sortType, Pageable pageable);
+    SearchHits<MemberDocument> findBy(String keyword, SearchOption option, SortType sortType, Pageable pageable);
 
     void save(MemberDocument document);
 

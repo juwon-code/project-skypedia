@@ -34,7 +34,7 @@ public class MemberDocumentRepositoryImpl implements MemberDocumentRepository {
     }
 
     @Override
-    public SearchHits<MemberDocument> search(String keyword, SearchOption option, SortType sortType, Pageable pageable) {
+    public SearchHits<MemberDocument> findBy(String keyword, SearchOption option, SortType sortType, Pageable pageable) {
         Query query = switch (option) {
             case MEMBER_NICKNAME -> MatchQuery.of(match -> match
                     .field("nickname").query(keyword))._toQuery();
