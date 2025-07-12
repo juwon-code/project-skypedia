@@ -4,6 +4,7 @@ import com.prgrmsfinal.skypedia.global.constant.SocialType;
 import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
 import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
 import com.prgrmsfinal.skypedia.member.exception.InvalidSocialTypeException;
+import com.prgrmsfinal.skypedia.member.exception.MemberNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -33,7 +34,7 @@ public class SocialLoginServiceImpl implements SocialLoginService {
 
         try {
             info = memberService.getInfo(socialInfo.oauthId());
-        } catch (NoSuchElementException e) {
+        } catch (MemberNotFoundException e) {
             info = memberService.create(socialInfo);
         }
 

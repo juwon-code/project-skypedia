@@ -128,34 +128,27 @@ jwt:
     expiration: 604800000
 
 # Redis key constants
-redis-key:
-  refresh-token: "refresh_token:"
-  post:
-    views: "post:views:"
-    likes:
-      add: "post:likes:add:"
-      del: "post:likes:del:"
-    scrap:
-      add: "post:scrap:add:"
-      del: "post:scrap:del:"
-  reply:
-    likes:
-      add: "reply:likes:add:"
-      del: "reply:likes:del:"
-  plan-group:
-    views: "plan_group:views:"
-    likes:
-      add: "plan-group:likes:add:"
-      del: "plan-group:likes:del:"
-    scrap:
-      add: "plan-group:scrap:add:"
-      del: "plan-group:scrap:del:"
-  notifyMessage:
-    on-user: "notifyMessage-on-user.key:"
-    on-global: "notifyMessage-on-global.key:"
-  sse:
-    emitter: "sse-emitter.key:"
-    event: "sse-event.key:"
+constant:
+  redis:
+    prefix:
+      refresh-token: "refresh_token:"
+      notify-message:
+        on-user: "notify_message:on-user"
+        on-global: "notify_message:on-global"
+      sse:
+        emitter: "sse_emitter:"
+        event: "sse_event:"
+      post: "post:"
+      plan-post: "plan_post:"
+      reply: "reply:"
+    suffix:
+      likes:
+        add: ":likes:add"
+        del: ":likes:del"
+      views: ":views"
+      scrap:
+        add: ":scrap:add"
+        del: ":scrap:del"
 
 # URI constants
 client-uri: ${CLIENT_URI}

@@ -15,7 +15,7 @@ public class JwtTokenServiceImpl implements JwtTokenService {
     private final JwtTokenUtil jwtTokenUtil;
     private final RedisTemplate<String, String> redisTemplate;
 
-    @Value("${refresh-token.key}")
+    @Value("${constant.redis.prefix.refresh-token}")
     private String refreshTokenPrefix;
 
     @Autowired

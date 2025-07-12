@@ -29,21 +29,28 @@ public class AuthenticationSuccessHandlerImpl implements AuthenticationSuccessHa
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response
             , Authentication authentication) throws IOException, ServletException {
         if (authentication instanceof OAuth2AuthenticationToken oauth2Token) {
-            String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
+            try {
+                String registrationId = oauth2Token.getAuthorizedClientRegistrationId();
 
-            Map<String, Object> attributes = oauth2Token.getPrincipal().getAttributes();
+                Map<String, Object> attributes = oauth2Token.getPrincipal().getAttributes();
 
-            SocialType socialType = SocialType.fromString(registrationId);
+                SocialType socialType = SocialType.fromString(registrationId);
 
-            MemberResponseDto.SignIn dto = socialLoginService.authenticate(attributes, socialType);
+                MemberResponseDto.SignIn dto = socialLoginService.authenticate(attributes, socialType);
 
-            response.setStatus(HttpStatus.OK.value());
-            response.setCharacterEncoding("UTF-8");
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.getWriter().write(String.format(
-                    "{ \"nickname\": \"%s\", \"profilePhotoUrl\": \"%s\", \"accessToken\": \"%s\" }",
-                    dto.nickname(), dto.photoUrl(), dto.accessToken()
-            ));
+                response.setStatus(HttpStatus.OK.value());
+                response.setCharacterEncoding("UTF-8");
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.getWriter().write(String.format(
+                        "{ \"nickname\": \"%s\", \"profilePhotoUrl\": \"%s\", \"accessToken\": \"%s\" }",
+                        dto.nickname(), dto.photoUrl(), dto.accessToken()
+                ));
+            } catch (Exception e) {
+                response.setStatus(HttpStatus.UNAUTHORIZED.value());
+                response.setCharacterEncoding("UTF-8");
+                response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+                response.getWriter().write("{ \"error\": \"로그인 중 오류가 발생했습니다. 다시 시도해주세요.\" }");
+            }
         }
     }
 }
