@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <configuration>
     <!-- Constants from .env -->
-    <property name="FILE_PATH" value="${LOG_FILE_PATH}"/>
-    <property name="MAX_FILE_SIZE" value="${LOG_MAX_FILE_SIZE}"/>
-    <property name="MAX_HISTORY" value="${LOG_MAX_HISTORY}"/>
-    <property name="TOTAL_SIZE_CAP" value="${LOG_TOTAL_SIZE_CAP}"/>
-    <property name="LEVEL" value="${LOG_LEVEL}"/>
+    <property name="FILE_PATH" value="${LOG_FILE_PATH:-/logs/app.log}"/>
+    <property name="MAX_FILE_SIZE" value="${LOG_MAX_FILE_SIZE:-10MB}"/>
+    <property name="MAX_HISTORY" value="${LOG_MAX_HISTORY:-30}"/>
+    <property name="TOTAL_SIZE_CAP" value="${LOG_TOTAL_SIZE_CAP:-500MB}"/>
+    <property name="LEVEL" value="${LOG_LEVEL:-INFO}"/>
 
     <!-- Console settings -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
