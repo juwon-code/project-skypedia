@@ -108,12 +108,18 @@ dependencies {
 
     /*
     * Test Dependency List
-    * - Spring Boot Starter Test :: Spring Boot 테스트를 위한 모듈을 포함하는 라이브러리.
-    * - Spring Security Test     :: Spring Security 기반 테스트를 지원하는 라이브러리.
-    * - Junit Platform Launcher  :: JUnit5 테스트 실행 런처 역할을 하는 라이브러리.
+    * - Spring Boot Starter Test               :: Spring Boot 테스트를 위한 모듈을 포함하는 라이브러리.
+    * - Spring Security Test                   :: Spring Security 기반 테스트를 지원하는 라이브러리.
+    * - Testcontainers JUnit Jupiter Extension :: JUnit 테스트를 위한 격리 컨테이너 지원 라이브러리.
+    * - Testcontainers JDBC PostgreSQL         :: PostgreSQL 테스트를 위한 격리 컨테이너 지원 라이브러리.
+    * - Testcontainers Elasticsearch           :: Elasticsearch 테스트를 위한 격리 컨테이너 지원 라이브러리.
+    * - Junit Platform Launcher                :: JUnit5 테스트 실행 런처 역할을 하는 라이브러리.
     * */
     testImplementation 'org.springframework.boot:spring-boot-starter-test:3.3.5'
     testImplementation 'org.springframework.security:spring-security-test:6.2.4'
+    testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
+    testImplementation 'org.testcontainers:postgresql:1.21.3'
+    testImplementation 'org.testcontainers:elasticsearch:1.21.3'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
