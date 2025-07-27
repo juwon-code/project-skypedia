@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.5'
+    id 'org.springframework.boot' version '3.5.4'
     id 'io.spring.dependency-management' version '1.1.6'
 }
 
@@ -33,10 +33,10 @@ dependencies {
     * - Project Lombok                   :: 보일러플레이트 코드를 줄여주는 애너테이션 기반 라이브러리.
     * - Apache Commons Lang3             :: Java의 기본 기능을 확장하는 유틸리티 라이브러리.
     * */
-    implementation 'org.springframework.boot:spring-boot-starter-web:3.3.5'
-    implementation 'org.springframework.boot:spring-boot-starter-websocket:3.3.5'
-    implementation 'org.springframework.boot:spring-boot-starter-actuator:3.3.5'
-    developmentOnly 'org.springframework.boot:spring-boot-devtools:3.3.5'
+    implementation 'org.springframework.boot:spring-boot-starter-web:3.5.4'
+    implementation 'org.springframework.boot:spring-boot-starter-websocket:3.5.4'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator:3.5.4'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:3.5.4'
     compileOnly 'org.projectlombok:lombok:1.18.38'
     annotationProcessor 'org.projectlombok:lombok:1.18.38'
     implementation 'org.apache.commons:commons-lang3:3.12.0'
@@ -50,9 +50,9 @@ dependencies {
     * - JJWT Impl                         :: JJWT API 내부 구현을 담당하는 라이브러리.
     * - JJWT Jackson                      :: JWT 데이터 직렬화 및 역직렬화에 Jackson을 활용하는 라이브러리.
     * */
-    implementation 'org.springframework.boot:spring-boot-starter-security:3.3.5'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:3.3.5'
-    implementation 'org.springframework.boot:spring-boot-starter-validation:3.3.5'
+    implementation 'org.springframework.boot:spring-boot-starter-security:3.5.4'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client:3.5.4'
+    implementation 'org.springframework.boot:spring-boot-starter-validation:3.5.4'
     implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
@@ -64,7 +64,7 @@ dependencies {
     * - Spring Cloud GCP Starter          :: GCP 서비스의 연동 기본 설정을 제공하는 라이브러리.
     * - Spring Cloud GCP Storage          :: GCS와 파일 입출력을 간편하게 지원하는 라이브러리.
     * */
-    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch:3.3.5'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch:3.5.4'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     implementation 'org.springframework.cloud:spring-cloud-gcp-starter:1.2.8.RELEASE'
     implementation 'org.springframework.cloud:spring-cloud-gcp-storage:1.2.8.RELEASE'
@@ -81,9 +81,9 @@ dependencies {
     * - QueryDSL JPA                 :: JPA 엔티티를 대상으로 타입 세이프 쿼리 작성을 지원하는 라이브러리.
     * - QueryDSL APT                 :: QueryDSL 동작에 필요한 Q도메인 클래스를 생성하는 라이브러리.
     * */
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.3.5'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa:3.5.4'
     runtimeOnly 'org.postgresql:postgresql:42.7.7'
-    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.3.5'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.5.4'
     implementation 'org.hibernate:hibernate-spatial:6.2.0.Final'
     implementation 'org.locationtech.jts:jts-core:1.18.0'
     implementation 'org.flywaydb:flyway-core:11.9.1'
@@ -109,13 +109,15 @@ dependencies {
     /*
     * Test Dependency List
     * - Spring Boot Starter Test               :: Spring Boot 테스트를 위한 모듈을 포함하는 라이브러리.
+    * - Spring Boot Testcontainers             :: 컨테이너 기반 테스트 환경 구축 및 관리를 위한 라이브러리.
     * - Spring Security Test                   :: Spring Security 기반 테스트를 지원하는 라이브러리.
     * - Testcontainers JUnit Jupiter Extension :: JUnit 테스트를 위한 격리 컨테이너 지원 라이브러리.
     * - Testcontainers JDBC PostgreSQL         :: PostgreSQL 테스트를 위한 격리 컨테이너 지원 라이브러리.
     * - Testcontainers Elasticsearch           :: Elasticsearch 테스트를 위한 격리 컨테이너 지원 라이브러리.
     * - Junit Platform Launcher                :: JUnit5 테스트 실행 런처 역할을 하는 라이브러리.
     * */
-    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.3.5'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:3.5.4'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers:3.5.4'
     testImplementation 'org.springframework.security:spring-security-test:6.2.4'
     testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
     testImplementation 'org.testcontainers:postgresql:1.21.3'
