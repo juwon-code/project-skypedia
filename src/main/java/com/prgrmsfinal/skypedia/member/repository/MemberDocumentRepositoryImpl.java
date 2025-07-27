@@ -2,9 +2,7 @@ package com.prgrmsfinal.skypedia.member.repository;
 
 import co.elastic.clients.elasticsearch._types.SortOptions;
 import co.elastic.clients.elasticsearch._types.SortOrder;
-import co.elastic.clients.elasticsearch._types.query_dsl.MatchQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.MultiMatchQuery;
-import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.*;
 import com.prgrmsfinal.skypedia.global.constant.SearchOption;
 import com.prgrmsfinal.skypedia.global.constant.SortType;
 import com.prgrmsfinal.skypedia.member.entity.MemberDocument;
@@ -14,6 +12,7 @@ import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
+import org.springframework.data.elasticsearch.core.query.DeleteQuery;
 import org.springframework.data.elasticsearch.core.query.IndexQuery;
 import org.springframework.stereotype.Repository;
 
@@ -36,12 +35,16 @@ public class MemberDocumentRepositoryImpl implements MemberDocumentRepository {
     @Override
     public SearchHits<MemberDocument> findBy(String keyword, SearchOption option, SortType sortType, Pageable pageable) {
         Query query = switch (option) {
-            case MEMBER_NICKNAME -> MatchQuery.of(match -> match
-                    .field("nickname").query(keyword))._toQuery();
-            case MEMBER_EMAIL -> MatchQuery.of(match -> match
-                    .field("email").query(keyword))._toQuery();
-            case MEMBER_ALL -> MultiMatchQuery.of(match -> match
-                    .fields("nickname", "email").query(keyword))._toQuery();
+            case MEMBER_NICKNAME -> WildcardQuery.of(wildcard -> wildcard
+                    .field("nickname").value(String.format("*%s*", keyword)))
+                    ._toQuery();
+            case MEMBER_EMAIL -> WildcardQuery.of(wildcard -> wildcard
+                    .field("email").value(String.format("*%s*", keyword)))
+                    ._toQuery();
+            case MEMBER_ALL -> BoolQuery.of(bool -> bool
+                    .should(WildcardQuery.of(w -> w.field("nickname").value(String.format("*%s*", keyword))))
+                    .should(WildcardQuery.of(w -> w.field("email").value(String.format("*%s*", keyword)))))
+                    ._toQuery();
         };
 
         SortOptions sortOptions = switch (sortType) {
@@ -76,12 +79,18 @@ public class MemberDocumentRepositoryImpl implements MemberDocumentRepository {
 
     @Override
     public void deleteAll(List<Long> ids) {
+        List<String> stringIds = ids.stream()
+                .map(String::valueOf)
+                .toList();
+
+        Query idsQuery = IdsQuery.of(iq -> iq.values(stringIds))._toQuery();
+
         NativeQuery nativeQuery = NativeQuery.builder()
-                .withIds(ids.stream().map(String::valueOf).toList())
+                .withQuery(idsQuery)
                 .build();
 
-        IndexCoordinates indexCoordinates = IndexCoordinates.of("member");
+        DeleteQuery deleteQuery = DeleteQuery.builder(nativeQuery).build();
 
-        elasticsearchOperations.delete(nativeQuery, indexCoordinates);
+        elasticsearchOperations.delete(deleteQuery, MemberDocument.class, IndexCoordinates.of("member"));
     }
 }

@@ -10,6 +10,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.annotations.DateFormat;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,13 +24,13 @@ public class MemberDocument {
     @Id
     private Long id;
 
-    @Field(type = FieldType.Text, analyzer = "korean_index_analyzer", searchAnalyzer = "korean_search_analyzer")
+    @Field(type = FieldType.Keyword, normalizer = "lowercase_normalizer")
     private String name;
 
-    @Field(type = FieldType.Text, analyzer = "korean_index_analyzer", searchAnalyzer = "korean_search_analyzer")
+    @Field(type = FieldType.Keyword, normalizer = "lowercase_normalizer")
     private String nickname;
 
-    @Field(type = FieldType.Text)
+    @Field(type = FieldType.Keyword, normalizer = "lowercase_normalizer")
     private String email;
 
     @Field(type = FieldType.Keyword)
@@ -38,10 +39,10 @@ public class MemberDocument {
     @Field(type = FieldType.Keyword)
     private List<String> roles;
 
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {DateFormat.date_hour_minute_second_millis, DateFormat.epoch_millis})
     private LocalDateTime createdAt;
 
-    @Field(type = FieldType.Date)
+    @Field(type = FieldType.Date, format = {DateFormat.date_hour_minute_second_millis, DateFormat.epoch_millis})
     private LocalDateTime removedAt;
 
     @Builder

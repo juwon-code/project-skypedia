@@ -11,6 +11,12 @@
         "tokenizer": "nori_tokenizer",
         "filter": ["lowercase"]
       }
+    },
+    "normalizer": {
+      "lowercase_normalizer": {
+        "type": "custom",
+        "filter": ["lowercase"]
+      }
     }
   }
 }
