@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS member_role
 (
     id          BIGSERIAL    PRIMARY KEY,
     member_id   BIGINT       NOT NULL,
-    role_type   VARCHAR(10)  NOT NULL CHECK (role_type IN ('ROLE_USER', 'ROLE_ADMIN')),
+    role_type   VARCHAR(10)  NOT NULL CHECK (role_type IN ('USER', 'ADMIN')),
     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES member (id) ON DELETE CASCADE
 );
@@ -284,7 +284,7 @@ CREATE TABLE IF NOT EXISTS photo
     FOREIGN KEY (member_id) REFERENCES member (id)
 );
 
-CREATE TABLE IF NOT EXISTS photo_profile
+CREATE TABLE IF NOT EXISTS photo_member
 (
     photo_id    BIGINT     NOT NULL,
     member_id   BIGINT     NOT NULL,

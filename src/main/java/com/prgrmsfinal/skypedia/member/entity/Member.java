@@ -47,7 +47,7 @@ public class Member {
 
 	private LocalDateTime removedAt;
 
-	@OneToOne(cascade = CascadeType.ALL)
+	@OneToOne(mappedBy = "member", cascade = CascadeType.ALL)
 	private PhotoMember photoMember;
 
 	@OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
