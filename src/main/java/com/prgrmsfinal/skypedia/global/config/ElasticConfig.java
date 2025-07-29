@@ -20,7 +20,6 @@ public class ElasticConfig extends ElasticsearchConfiguration {
     public ClientConfiguration clientConfiguration() {
         return ClientConfiguration.builder()
                 .connectedTo(elasticProperties.uris())
-                .withBasicAuth(elasticProperties.username(), elasticProperties.password())
                 .build();
     }
 }
