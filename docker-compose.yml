@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # Nginx proxy server
   nginx:
-    image: nginx:1.27.3-alpine
+    image: nginx:1.28.0
     container_name: proxy-server
     ports:
       - "80:80"
@@ -28,7 +28,13 @@ services:
     volumes:
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
-    entrypoint: "/bin/sh -c 'certbot renew --webroot -w /var/www/certbot --quiet && sleep 12h & exit 0'"
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: /bin/sh -c "\
+      while true; do \
+        certbot renew --webroot -w /var/www/certbot --quiet && \
+        docker exec proxy-server nginx -s reload; \
+        sleep 12h; \
+      done"
     networks:
       - public-net
 
@@ -48,14 +54,10 @@ services:
       retries: 5
       start_period: 15s
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
       elastic-search:
         condition: service_healthy
-      elastic-search-setup:
-        condition: service_completed_successfully
     volumes:
       - ./logs:/logs
     networks:
@@ -67,55 +69,36 @@ services:
   redis-db:
     image: redis:7.4.2-alpine
     container_name: redis-db
-    environment:
-      REDIS_PASSWORD: ${IMDB_PASSWORD}
-    command: ["redis-server", "--requirepass", "${IMDB_PASSWORD}"]
+    command: ["redis-server", "--appendonly", "yes"]
     healthcheck:
-      test: [ "CMD", "redis-cli", "-a", "${IMDB_PASSWORD}", "ping" ]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 5
       start_period: 5s
+    volumes:
+      - ./redis-data:/data
     networks:
       - internal-net
     expose:
       - "6379"
 
-  # PostgreSQL DB (with PostGIS)
-  postgres-db:
-    image: postgis/postgis:17-master
-    container_name: postgres-db
-    environment:
-      POSTGRES_DB: ${RDB_SCHEMA_NAME}
-      POSTGRES_USER: ${RDB_USERNAME}
-      POSTGRES_PASSWORD: ${RDB_PASSWORD}
-    command: ["postgres", "-c", "timezone=Asia/Seoul"]
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    volumes:
-      - ./pg-data:/var/lib/postgresql/data
-    networks:
-      - internal-net
-    expose:
-      - "5432"
-
   # Elasticsearch
   elastic-search:
+    image: elasticsearch:7.17.28
     container_name: elastic-search
-    build:
-      context: .
-      dockerfile: elasticsearch.Dockerfile
     environment:
       - discovery.type=single-node
-      - xpack.security.enabled=true
-      - ELASTIC_USERNAME=${ELASTIC_USERNAME}
-      - ELASTIC_PASSWORD=${ELASTIC_PASSWORD}
+      - xpack.security.enabled=false
+    command: >
+      bash -c "
+        if [ ! -d '/usr/share/elasticsearch/plugins/analysis-nori' ]; then
+          elasticsearch-plugin install analysis-nori --batch;
+        fi &&
+        exec /usr/local/bin/docker-entrypoint.sh eswrapper
+      "
     healthcheck:
-      test: [ "CMD-SHELL", "curl -u $${ELASTIC_USERNAME}:$${ELASTIC_PASSWORD} -s http://localhost:9200/_cluster/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1" ]
       interval: 10s
       retries: 10
       timeout: 5s
@@ -126,23 +109,11 @@ services:
         hard: -1
     volumes:
       - ./es-data:/usr/share/elasticsearch/data
+      - ./es-plugins:/usr/share/elasticsearch/plugins
     networks:
       - internal-net
     expose:
       - "9200"
-
-  # Elasticsearch Setup
-  elastic-search-setup:
-    image: elastic-search
-    depends_on:
-      elastic-search:
-        condition: service_healthy
-    command: ["/usr/share/elasticsearch/init.sh"]
-    environment:
-      ELASTIC_USERNAME: ${ELASTIC_USERNAME}
-      ELASTIC_PASSWORD: ${ELASTIC_PASSWORD}
-    networks:
-      - internal-net
 
 networks:
   public-net:

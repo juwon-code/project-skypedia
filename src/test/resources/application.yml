@@ -9,3 +9,6 @@ jwt:
 spring:
   flyway:
     clean-disabled: false
+    locations:
+      - classpath:/db/migration/base
+      - classpath:/db/migration/test
