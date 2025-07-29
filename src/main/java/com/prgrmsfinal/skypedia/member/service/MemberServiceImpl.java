@@ -11,10 +11,7 @@ import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
 import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
 import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.member.entity.MemberRole;
-import com.prgrmsfinal.skypedia.member.exception.CannotRestoreMemberException;
-import com.prgrmsfinal.skypedia.member.exception.MemberNotFoundException;
-import com.prgrmsfinal.skypedia.member.exception.NicknameConflictException;
-import com.prgrmsfinal.skypedia.member.exception.WithdrawnMemberException;
+import com.prgrmsfinal.skypedia.member.exception.*;
 import com.prgrmsfinal.skypedia.member.repository.MemberDocumentRepository;
 import com.prgrmsfinal.skypedia.member.repository.MemberQueryRepository;
 import com.prgrmsfinal.skypedia.member.repository.MemberRepository;
@@ -254,7 +251,7 @@ public class MemberServiceImpl implements MemberService{
         );
 
         if (member.isRemoved()) {
-            throw new WithdrawnMemberException();
+            throw new AlreadyWithdrawnException();
         }
 
         LocalDateTime removedAt = LocalDateTime.now();

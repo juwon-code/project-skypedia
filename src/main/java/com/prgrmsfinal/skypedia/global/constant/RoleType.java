@@ -2,6 +2,7 @@ package com.prgrmsfinal.skypedia.global.constant;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.prgrmsfinal.skypedia.member.exception.InvalidRoleTypeException;
+
 import java.util.Arrays;
 
 public enum RoleType {

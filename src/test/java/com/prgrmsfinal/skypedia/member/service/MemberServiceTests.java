@@ -535,7 +535,7 @@ public class MemberServiceTests {
         when(memberQueryRepository.findOneBy(any(MemberRequestDto.SearchOptions.class)))
                 .thenReturn(Optional.of(member));
 
-        assertThrows(WithdrawnMemberException.class, () -> memberService.removeMe());
+        assertThrows(AlreadyWithdrawnException.class, () -> memberService.removeMe());
 
         verify(securityUtil).getCurrentMemberId();
         verify(memberQueryRepository).findOneBy(any(MemberRequestDto.SearchOptions.class));
@@ -589,7 +589,7 @@ public class MemberServiceTests {
         when(memberQueryRepository.findOneBy(any(MemberRequestDto.SearchOptions.class)))
                 .thenReturn(Optional.of(member));
 
-        assertThrows(WithdrawnMemberException.class, () -> memberService.remove(1L));
+        assertThrows(AlreadyWithdrawnException.class, () -> memberService.remove(1L));
 
         verify(memberQueryRepository).findOneBy(any(MemberRequestDto.SearchOptions.class));
         verify(jwtTokenService, never()).deleteRefreshToken(anyLong());

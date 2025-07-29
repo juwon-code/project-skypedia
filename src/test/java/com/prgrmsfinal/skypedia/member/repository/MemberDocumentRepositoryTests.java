@@ -37,7 +37,7 @@ public class MemberDocumentRepositoryTests {
     @Container
     @ServiceConnection
     private static ElasticsearchContainer elasticsearchContainer
-            = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.17.5")
+            = new ElasticsearchContainer("docker.elastic.co/elasticsearch/elasticsearch:7.17.28")
             .withCommand("sh", "-c", "elasticsearch-plugin install analysis-nori --batch && /usr/local/bin/docker-entrypoint.sh eswrapper");
 
     @Autowired

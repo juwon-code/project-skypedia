@@ -5,7 +5,6 @@ import com.prgrmsfinal.skypedia.member.entity.Member;
 import com.prgrmsfinal.skypedia.member.entity.MemberRole;
 import com.prgrmsfinal.skypedia.member.exception.AlreadyGrantedException;
 import com.prgrmsfinal.skypedia.member.exception.CannotRevokeException;
-import com.prgrmsfinal.skypedia.member.exception.MemberRoleException;
 import com.prgrmsfinal.skypedia.member.repository.MemberRoleQueryRepository;
 import com.prgrmsfinal.skypedia.member.repository.MemberRoleRepository;
 import org.junit.jupiter.api.DisplayName;

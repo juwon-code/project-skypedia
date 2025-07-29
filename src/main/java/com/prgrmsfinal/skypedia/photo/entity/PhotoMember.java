@@ -18,7 +18,7 @@ public class PhotoMember extends AbstractAssociationEntity<PhotoProfileId, Photo
     @JoinColumn(name = "photo_id", referencedColumnName = "id", nullable = false)
     private Photo photo;
 
-    @ManyToOne
+    @OneToOne
     @MapsId("memberId")
     @JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
     private Member member;
