@@ -1,38 +1,34 @@
 package com.prgrmsfinal.skypedia.post.entity;
 
-import java.time.LocalDateTime;
-
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.post.entity.key.PostScrapId;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.prgrmsfinal.skypedia.post.entity.compositekey.PostScrapId;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class PostScrap {
-	@EmbeddedId
-	private PostScrapId id;
-
-	@ManyToOne
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+public class PostScrap extends AbstractAssociationEntity<PostScrapId, Post, Member> {
+	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("postId")
+	@JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false)
 	private Post post;
 
-	@ManyToOne
+	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("memberId")
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@Column(insertable = false, updatable = false)
-	private LocalDateTime scrapedAt;
+	@Builder
+	public PostScrap(Post post, Member member) {
+		super.initializeId(post, member);
+		this.post = post;
+		this.member = member;
+	}
+
+	@Override
+	protected PostScrapId createId(Post post, Member member) {
+		return new PostScrapId(post.getId(), member.getId());
+	}
 }

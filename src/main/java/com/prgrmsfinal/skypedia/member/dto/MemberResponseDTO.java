@@ -1,46 +1,81 @@
 package com.prgrmsfinal.skypedia.member.dto;
 
-import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.member.entity.Role;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
+import com.prgrmsfinal.skypedia.global.constant.RoleType;
+import com.prgrmsfinal.skypedia.global.constant.SocialType;
 import lombok.Builder;
-import lombok.Getter;
 
-@Getter
-public class MemberResponseDTO {    //회원 조회용 DTO
-	private final Long id;
-	private final String oauthId;
-	private final String name;
-	private final String email;
-	private final String username;
-	private final Role role;
-	private final String profileImage;
+import java.time.LocalDateTime;
+import java.util.List;
 
-	public MemberResponseDTO(Member member) {
-		this.id = member.getId();
-		this.oauthId = member.getOauthId();
-		this.name = member.getName();
-		this.email = member.getEmail();
-		this.username = member.getUsername();
-		this.role = member.getRole();
-		this.profileImage = member.getProfileImage();
-	}
+public sealed interface MemberResponseDto permits MemberResponseDto.Info, MemberResponseDto.SimpleProfile
+        , MemberResponseDto.Profile, MemberResponseDto.SearchProfile, MemberResponseDto.SignIn, MemberResponseDto.Modify
+        , MemberResponseDto.Remove {
+    record Info(
+            Long id,
+            String nickname,
+            String photoUrl,
+            List<RoleType> roleTypes
+    ) implements MemberResponseDto {
+        @Builder
+        public Info {}
+    }
 
-	@Schema(title = "회원 정보 조회 DTO", description = "회원 정보 조회에 사용하는 DTO입니다.")
-	@Getter
-	@Builder
-	@AllArgsConstructor
-	public static class Info {
-		@Schema(title = "회원 ID", description = "회원 ID입니다.", example = "1")
-		private final Long id;
+    record SimpleProfile(
+            String nickname,
+            String photoUrl
+    ) implements MemberResponseDto {
+        @Builder
+        public SimpleProfile {}
+    }
 
-		@Schema(title = "닉네임", description = "회원 닉네임입니다.", example = "닉네임1")
-		private final String username;
+    record Profile(
+            String nickname,
+            String email,
+            SocialType socialType,
+            String photoUrl,
+            boolean removed
+    ) implements MemberResponseDto {
+        @Builder
+        public Profile {}
+    }
 
-		@Schema(title = "사진 URL", description = "사진 URL입니다.", minimum = "1", example = "25")
-		private final String profileUrl;
+    record SearchProfile(
+            Long id,
+            String nickname,
+            String email,
+            String socialType,
+            String photoUrl,
+            List<String> roleTypes,
+            LocalDateTime createdAt,
+            LocalDateTime removedAt
+    ) implements MemberResponseDto {
+        @Builder
+        public SearchProfile {}
+    }
 
-	}
+    record SignIn(
+            String nickname,
+            String photoUrl,
+            String accessToken
+    ) implements MemberResponseDto {
+        @Builder
+        public SignIn {}
+    }
+
+    record Modify(
+            String nickname,
+            String uuid,
+            String uploadUrl
+    ) implements MemberResponseDto {
+        @Builder
+        public Modify {}
+    }
+
+    record Remove(
+            LocalDateTime removedAt,
+            LocalDateTime willDeletedAt
+    ) implements MemberResponseDto {
+        @Builder
+        public Remove {}
+    }
 }

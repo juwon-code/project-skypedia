@@ -1,25 +1,34 @@
 package com.prgrmsfinal.skypedia.member.service;
 
-import org.springframework.security.core.Authentication;
-
-import com.prgrmsfinal.skypedia.member.dto.MemberRequestDTO;
-import com.prgrmsfinal.skypedia.member.dto.MemberResponseDTO;
-import com.prgrmsfinal.skypedia.member.entity.Member;
+import com.prgrmsfinal.skypedia.global.dto.SearchRequestDto;
+import com.prgrmsfinal.skypedia.global.dto.SearchResponseDto;
+import com.prgrmsfinal.skypedia.member.dto.MemberRequestDto;
+import com.prgrmsfinal.skypedia.member.dto.MemberResponseDto;
 
 public interface MemberService {
-	Member getAuthenticatedMember(Authentication authentication);
+	MemberResponseDto.Info create(MemberRequestDto.SocialInfo socialInfo);
 
-	void modify(Long id, MemberRequestDTO memberRequestDTO);
+	MemberResponseDto.Info getInfo(String oauthId);
 
-	MemberResponseDTO read(Long id);
+	MemberResponseDto.Profile getMyProfile();
 
-	MemberResponseDTO readByUsername(String username);
+	MemberResponseDto.Profile getProfile(Long memberId);
 
-	void deleteMember(Long id);
+	SearchResponseDto.Pagination<MemberResponseDto.SearchProfile> search(SearchRequestDto.Member requestDto);
 
-	void physicalDeleteMember();
+	MemberResponseDto.Modify modifyMe(MemberRequestDto.Modify requestDto);
 
-	boolean checkExistsByUsername(String username);
+	MemberResponseDto.Modify modify(Long memberId, MemberRequestDto.Modify requestDto);
 
-	Member getByUsername(String username);
+	MemberResponseDto.Remove removeMe();
+
+	MemberResponseDto.Remove remove(Long memberId);
+
+	void restore(Long memberId);
+
+	void deleteRemovedMembers();
+
+	void grantAdmin(Long memberId);
+
+	void revokeAdmin(Long memberId);
 }

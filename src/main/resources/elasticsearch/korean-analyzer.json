@@ -1,0 +1,22 @@
+{
+  "analysis": {
+    "analyzer": {
+      "korean_index_analyzer": {
+        "type": "custom",
+        "tokenizer": "nori_tokenizer",
+        "filter": ["lowercase", "nori_readingform", "nori_part_of_speech"]
+      },
+      "korean_search_analyzer": {
+        "type": "custom",
+        "tokenizer": "nori_tokenizer",
+        "filter": ["lowercase"]
+      }
+    },
+    "normalizer": {
+      "lowercase_normalizer": {
+        "type": "custom",
+        "filter": ["lowercase"]
+      }
+    }
+  }
+}

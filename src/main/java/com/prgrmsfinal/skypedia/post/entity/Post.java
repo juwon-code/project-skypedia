@@ -1,80 +1,60 @@
 package com.prgrmsfinal.skypedia.post.entity;
 
 import java.time.LocalDateTime;
-import java.util.List;
-
 import com.prgrmsfinal.skypedia.member.entity.Member;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Post {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "member_id")
+	@ManyToOne(cascade = CascadeType.REMOVE)
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@ManyToOne
-	@JoinColumn(name = "category_id")
-	private PostCategory category;
+	@ManyToOne(cascade = CascadeType.REMOVE)
+	@JoinColumn(name = "post_category_id", referencedColumnName = "id", nullable = false)
+	private PostCategory postCategory;
 
+	@Column(length = 50, nullable = false)
 	private String title;
 
+	@Column(nullable = false)
 	private String content;
 
-	private String hashtags;
+	@Column(nullable = false)
+	private boolean removed;
 
-	@Builder.Default
-	private Long views = 0L;
-
-	@Builder.Default
-	private Long likes = 0L;
-
-	private Float rating;
-
-	@Builder.Default
-	private boolean deleted = false;
-
-	@Column(insertable = false, updatable = false)
+	@Column(nullable = false, insertable = false, updatable = false)
 	private LocalDateTime createdAt;
 
-	@Column(insertable = false, updatable = false)
+	@Column(nullable = false, insertable = false, updatable = false)
 	private LocalDateTime updatedAt;
 
-	private LocalDateTime deletedAt;
+	private LocalDateTime removedAt;
 
-	public void modify(String title, String content, List<String> hashtags) {
+	@Builder
+	public Post(Member member, PostCategory postCategory, String title, String content) {
+		this.member = member;
+		this.postCategory = postCategory;
 		this.title = title;
 		this.content = content;
-		this.hashtags = String.join(",", hashtags);
+		this.removed = false;
+		this.removedAt = null;
 	}
 
-	public void delete() {
-		this.deleted = true;
-
-		this.deletedAt = LocalDateTime.now();
+	public void modify(String title, String content) {
+		this.title = title;
+		this.content = content;
 	}
 
-	public void restore() {
-		this.deleted = false;
-
-		this.deletedAt = null;
+	public void remove() {
+		this.removed = true;
+		this.removedAt = LocalDateTime.now();
 	}
 }

@@ -1,41 +1,34 @@
 package com.prgrmsfinal.skypedia.reply.entity;
 
-import java.time.LocalDateTime;
-
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.reply.entity.key.ReplyLikesId;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import com.prgrmsfinal.skypedia.reply.entity.compositekey.ReplyLikesId;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class ReplyLikes {
-	@EmbeddedId
-	private ReplyLikesId id;
-
-	@ManyToOne
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+public class ReplyLikes extends AbstractAssociationEntity<ReplyLikesId, Reply, Member> {
+	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("replyId")
-	@JoinColumn(name = "reply_id", referencedColumnName = "id")
+	@JoinColumn(name = "reply_id", referencedColumnName = "id", nullable = false)
 	private Reply reply;
 
 	@ManyToOne
 	@MapsId("memberId")
-	@JoinColumn(name = "member_id", referencedColumnName = "id")
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@Column(insertable = false, updatable = false)
-	private LocalDateTime likedAt;
+	@Builder
+	public ReplyLikes(Reply reply, Member member) {
+		super.initializeId(reply, member);
+		this.reply = reply;
+		this.member = member;
+	}
+
+	@Override
+	protected ReplyLikesId createId(Reply reply, Member member) {
+		return new ReplyLikesId(reply.getId(), member.getId());
+	}
 }

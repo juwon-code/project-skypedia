@@ -3,58 +3,120 @@ version: '3.8'
 services:
   # Nginx proxy server
   nginx:
-    image: nginx:1.27.3-alpine
+    image: nginx:1.28.0
     container_name: proxy-server
     ports:
       - "80:80"
+      - "443:443"
     volumes:
-      - ./proxy/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
     depends_on:
-      - mysql-db
-      - redis-db
-      - app-server
+      app-server:
+        condition: service_healthy
+      certbot:
+        condition: service_started
+    command: ["nginx", "-g", "daemon off;"]
+    networks:
+      - public-net
+
+  # Certbot
+  certbot:
+    image: certbot/certbot:v1.7.0
+    container_name: certbot
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: /bin/sh -c "\
+      while true; do \
+        certbot renew --webroot -w /var/www/certbot --quiet && \
+        docker exec proxy-server nginx -s reload; \
+        sleep 12h; \
+      done"
+    networks:
+      - public-net
 
   # Application server
   app:
     image: ${DOCKER_IMAGE_PATH}:latest
+    env_file:
+      - .env
     container_name: app-server
-    ports:
-      - "8080:8080"
     build:
       context: .
       dockerfile: Dockerfile
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     depends_on:
-      - mysql-db
-      - redis-db
+      redis:
+        condition: service_healthy
+      elastic-search:
+        condition: service_healthy
     volumes:
       - ./logs:/logs
+    networks:
+      - internal-net
+    expose:
+      - "8080"
 
   # Redis DB
-  redis:
+  redis-db:
     image: redis:7.4.2-alpine
     container_name: redis-db
-    ports:
-      - "6379:6379"
-    environment:
-      REDIS_PASSWORD: ${IMDB_PASSWORD}
-    command: ["redis-server", "--requirepass", "${IMDB_PASSWORD}"]
-
-  # Mysql DB
-  mysql:
-    image: mysql:8.0.39
-    container_name: mysql-db
-    ports:
-      - "3306:3306"
-    environment:
-      TZ: Asia/Seoul
-      MYSQL_DATABASE: ${RDB_SCHEMA_NAME}
-      MYSQL_ROOT_PASSWORD: ${RDB_ROOT_PASSWORD}
-      MYSQL_USER: ${RDB_USERNAME}
-      MYSQL_PASSWORD: ${RDB_PASSWORD}
-    command:
-      - --character-set-server=utf8mb4
-      - --collation-server=utf8mb4_unicode_ci
-      - --skip-character-set-client-handshake
+    command: ["redis-server", "--appendonly", "yes"]
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      - ./redis-data:/data
+    networks:
+      - internal-net
+    expose:
+      - "6379"
 
+  # Elasticsearch
+  elastic-search:
+    image: elasticsearch:7.17.28
+    container_name: elastic-search
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    command: >
+      bash -c "
+        if [ ! -d '/usr/share/elasticsearch/plugins/analysis-nori' ]; then
+          elasticsearch-plugin install analysis-nori --batch;
+        fi &&
+        exec /usr/local/bin/docker-entrypoint.sh eswrapper
+      "
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1" ]
+      interval: 10s
+      retries: 10
+      timeout: 5s
+      start_period: 20s
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./es-data:/usr/share/elasticsearch/data
+      - ./es-plugins:/usr/share/elasticsearch/plugins
+    networks:
+      - internal-net
+    expose:
+      - "9200"
+
+networks:
+  public-net:
+    driver: bridge
+  internal-net:
+    internal: true

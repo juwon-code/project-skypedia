@@ -1,0 +1,14 @@
+jwt:
+  secret:
+    key: "JUST_FOR_TEST_KEY"
+  access-token:
+    expiration: 900000
+  refresh-token:
+    expiration: 604800000
+
+spring:
+  flyway:
+    clean-disabled: false
+    locations:
+      - classpath:/db/migration/base
+      - classpath:/db/migration/test

@@ -1,68 +1,62 @@
 package com.prgrmsfinal.skypedia.reply.entity;
 
 import java.time.LocalDateTime;
-
 import com.prgrmsfinal.skypedia.member.entity.Member;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import lombok.AllArgsConstructor;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Builder
 @NoArgsConstructor
-@AllArgsConstructor
 @Getter
 public class Reply {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@ManyToOne
-	@JoinColumn(name = "member_id")
+	@ManyToOne(cascade = CascadeType.REMOVE)
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "parent_reply_id")
+	@ManyToOne
+	@JoinColumn(name = "parent_reply_id", referencedColumnName = "id")
 	private Reply parentReply;
 
+	@Column(nullable = false)
 	private String content;
 
-	@Builder.Default
-	private Long likes = 0L;
+	@Column(nullable = false)
+	private boolean updated;
 
-	@Builder.Default
-	private boolean deleted = false;
+	@Column(nullable = false)
+	private boolean removed;
 
-	@Column(insertable = false, updatable = false)
+	@Column(insertable = false, updatable = false, nullable = false)
 	private LocalDateTime createdAt;
 
-	@Column(insertable = false, updatable = false)
+	@Column(insertable = false, updatable = false, nullable = false)
 	private LocalDateTime updatedAt;
 
-	private LocalDateTime deletedAt;
+	private LocalDateTime removedAt;
 
-	public void changeContent(String content) {
+	@Builder
+	public Reply(Member member, String content, Reply parentReply) {
+		this.member = member;
+		this.parentReply = parentReply;
 		this.content = content;
+		this.updated = false;
+		this.removed = false;
+		this.removedAt = null;
 	}
 
-	public void delete() {
-		deleted = true;
-		deletedAt = LocalDateTime.now();
+	public void update(String content) {
+		this.content = content;
+		this.updated = true;
 	}
 
-	public void restore() {
-		deleted = false;
-		deletedAt = null;
+	public void remove() {
+		this.removed = true;
+		this.removedAt = LocalDateTime.now();
 	}
 }

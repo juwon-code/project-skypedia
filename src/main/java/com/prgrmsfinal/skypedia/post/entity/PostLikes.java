@@ -1,43 +1,34 @@
 package com.prgrmsfinal.skypedia.post.entity;
 
-import java.time.LocalDateTime;
-
+import com.prgrmsfinal.skypedia.global.entity.AbstractAssociationEntity;
 import com.prgrmsfinal.skypedia.member.entity.Member;
-import com.prgrmsfinal.skypedia.post.entity.key.PostLikesId;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MapsId;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import com.prgrmsfinal.skypedia.post.entity.compositekey.PostLikesId;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class PostLikes {
-	@EmbeddedId
-	private PostLikesId id;
-
-	@ManyToOne
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
+public class PostLikes extends AbstractAssociationEntity<PostLikesId, Post, Member> {
+	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("postId")
-	@JoinColumn(name = "post_id", referencedColumnName = "id")
+	@JoinColumn(name = "post_id", referencedColumnName = "id", nullable = false)
 	private Post post;
 
-	@ManyToOne
+	@ManyToOne(cascade = CascadeType.REMOVE)
 	@MapsId("memberId")
-	@JoinColumn(name = "member_id", referencedColumnName = "id")
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
 	private Member member;
 
-	@Column(insertable = false, updatable = false)
-	private LocalDateTime likedAt;
+	@Builder
+	public PostLikes(Post post, Member member) {
+		super.initializeId(post, member);
+		this.post = post;
+		this.member = member;
+	}
+
+	@Override
+	protected PostLikesId createId(Post post, Member member) {
+		return new PostLikesId(post.getId(), member.getId());
+	}
 }

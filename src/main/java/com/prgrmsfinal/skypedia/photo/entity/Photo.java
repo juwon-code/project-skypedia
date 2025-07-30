@@ -1,59 +1,57 @@
 package com.prgrmsfinal.skypedia.photo.entity;
 
 import java.time.LocalDateTime;
-
+import com.prgrmsfinal.skypedia.member.entity.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import lombok.*;
 
 @Entity
-@Table(name = "photo")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 public class Photo {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true)
+	@ManyToOne
+	@JoinColumn(name = "member_id", referencedColumnName = "id", nullable = false)
+	private Member member;
+
+	@Column(unique = true, nullable = false)
 	private String uuid;
 
-	@Column(name = "original_filename", nullable = false)
-	private String originalFileName;
+	@Column(nullable = false)
+	private String filename;
 
-	@Column(name = "content_type")
-	private String contentType;
+	@Column(nullable = false)
+	private String extension;
 
-	@Column(name = "s3_filekey", nullable = false, unique = true)
-	private String s3FileKey;
+	@Column(nullable = false)
+	private boolean removed;
 
-	@Column(insertable = false, updatable = false)
+	@Column(insertable = false, updatable = false, nullable = false)
 	private LocalDateTime createdAt;
 
-	@Column(insertable = false, updatable = false)
-	private LocalDateTime updatedAt;
+	private LocalDateTime removedAt;
 
-	@PrePersist
-	public void prePersist() {
-		this.createdAt = LocalDateTime.now();
-		this.updatedAt = LocalDateTime.now();
+	@Builder
+	public Photo(Member member, String uuid, String filename, String extension) {
+		this.member = member;
+		this.uuid = uuid;
+		this.filename = filename;
+		this.extension = extension;
+		this.removed = false;
+		this.removedAt = null;
 	}
 
-	@PreUpdate
-	public void preUpdate() {
-		this.updatedAt = LocalDateTime.now();
+	public void remove() {
+		this.removed = true;
+		this.removedAt = LocalDateTime.now();
 	}
 }
