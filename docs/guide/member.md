@@ -9,12 +9,12 @@
 | 내 프로필 조회 |  GET   | /api/v1/member                   | 현재 로그인한 회원의 프로필을 조회합니다.     |  ✔️  |🧑‍|
 | 내 프로필 수정 | PATCH  | /api/v1/member                   | 현재 로그인한 회원의 프로필을 수정합니다.     |  ✔️  |🧑‍|
 | 회원 탈퇴  | DELETE | /api/v1/member                   | 현재 로그인한 회원의 탈퇴를 수행합니다.      |  ✔️  |🧑‍|
-| 회원 프로필 조회 |  GET   | /api/v1/member/admin/{회원ID}      | ID와 일치하는 회원의 상세 프로필을 조회합니다. |  ✔️  |🛡️|
-| 회원 목록 검색 |  GET   | /api/v1/member/admin/search      | 옵션과 키워드로 회원 목록을 검색합니다.      |  ✔️  |🛡️|
-| 강제 탈퇴  | DELETE | /api/v1/member/admin/{회원ID}      | ID와 일치하는 회원의 탈퇴를 수행합니다.     |  ✔️  |🛡️|
-| 복구 처리  | PATCH  | /api/v1/member/admin/{회원ID}      | ID와 일치하는 회원의 탈퇴를 취소합니다.     |  ✔️  |🛡️|
-| 관리자 권한 부여 | PATCH  | /api/v1/member/admin/role/{회원ID} | ID와 일치하는 회원에 관리자 권한을 부여합니다. |  ✔️  |🛡️|
-| 관리자 권한 제거 | DELETE | /api/v1/member/admin/role/{회원ID} | ID와 일치하는 회원의 관리자 권한을 제거합니다. |  ✔️  |🛡️|
+| 회원 프로필 조회 |  GET   | /api/v1/admin/member/{회원ID}      | ID와 일치하는 회원의 상세 프로필을 조회합니다. |  ✔️  |🛡️|
+| 회원 목록 검색 |  GET   | /api/v1/admin/member/search      | 옵션과 키워드로 회원 목록을 검색합니다.      |  ✔️  |🛡️|
+| 강제 탈퇴  | DELETE | /api/v1/admin/member/{회원ID}      | ID와 일치하는 회원의 탈퇴를 수행합니다.     |  ✔️  |🛡️|
+| 복구 처리  | PATCH  | /api/v1/admin/member/{회원ID}      | ID와 일치하는 회원의 탈퇴를 취소합니다.     |  ✔️  |🛡️|
+| 관리자 권한 부여 | PATCH  | /api/v1/admin/member/role/{회원ID} | ID와 일치하는 회원에 관리자 권한을 부여합니다. |  ✔️  |🛡️|
+| 관리자 권한 제거 | DELETE | /api/v1/admin/member/role/{회원ID} | ID와 일치하는 회원의 관리자 권한을 제거합니다. |  ✔️  |🛡️|
 
 <details>
 <summary>내 프로필 조회</summary>
