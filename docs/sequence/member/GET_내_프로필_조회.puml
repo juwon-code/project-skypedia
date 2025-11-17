@@ -5,7 +5,7 @@ title 내 프로필 조회 API 시퀀스 다이어그램
 
 actor User as user
 
-box "PresentationLayer"
+box "Presentation Layer"
     participant "DispatcherServlet" as dispatcher_servlet
     participant "MemberController" as member_controller
 end box
