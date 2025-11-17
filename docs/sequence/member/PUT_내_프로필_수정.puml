@@ -1,0 +1,124 @@
+@startuml
+autonumber
+
+title 내 프로필 수정 API 시퀀스 다이어그램
+
+actor User as user
+
+box "Presentation Layer"
+    participant "DispatcherServlet" as dispatcher_servlet
+    participant "MemberController" as member_controller
+end box
+
+box "Service Layer" #Pink
+    participant "MemberService" as member_service
+    participant "PhotoMemberService" as photo_member_service
+end box
+
+box "Utility Layer" #LightYellow
+    participant "SecurityUtil" as security_util
+end box
+
+box "Repository Layer" #LightGreen
+    participant "MemberQueryRepository" as member_query_repository
+    participant "MemberDocumentRepository" as member_document_repository
+end box
+
+box "Infrastructure Layer" #LightBlue
+    participant "GlobalExceptionHandler" as global_exception_handler
+    database "Database" as db
+    database "ElasticSearch" as es
+end box
+
+group 내 프로필 수정
+    user -> dispatcher_servlet: "PUT /api/v1/member" 요청
+    activate user
+    dispatcher_servlet -> member_controller: modifyMe(requestDto) 메소드 실행
+    activate member_controller
+
+    alt RequestBody 검증 실패
+        member_controller -> global_exception_handler: MethodArgumentNotValidException 예외 발생
+        global_exception_handler --> user: 400 Bad Request 응답
+        note right user: 에러 메시지: 요청 바디에 잘못된 값이 감지되었습니다.
+    else RequestBody 검증 성공
+        note right dispatcher_servlet: 닉네임, 사진 데이터 중 하나는 요청 데이터에 포함시켜야 합니다.
+        member_controller -> member_service: modifyMe(requestDto) 메소드 호출
+        activate member_service
+        member_service -> security_util: getCurrentMemberId() 메소드 호출
+        note right member_service: 현재 로그인한 회원의 ID를 가져오는 메소드입니다.
+        activate security_util
+
+        alt 유효하지 않은 Authentication 객체
+            security_util -> global_exception_handler: NotAuthenticatedException 예외 발생
+            global_exception_handler --> user: 401 Unauthorized 응답
+            note right user: 에러 메시지: 해당 서비스를 사용하기 위해서는 로그인이 필요합니다.
+        else 유효한 Authentication 객체
+            security_util --> member_service: 회원 ID 반환
+            deactivate security_util
+            note right member_service: 회원 ID는 Authentication 객체의 Principal과 일치합니다.
+
+            member_service -> member_query_repository: findOneBy(searchOption) 메소드 호출
+            note right member_service: 회원 ID를 검색옵션으로 사용하여 데이터를 조회합니다.
+            activate member_query_repository
+            member_query_repository -> db: ID와 일치하는 회원 데이터 조회
+            db --> member_query_repository: 조회한 회원 데이터 반환
+            member_query_repository --> member_service: Member 객체 반환
+            deactivate member_query_repository
+            alt 유효하지 않은 회원 데이터
+                member_service -> global_exception_handler: MemberNotFoundException 예외 발생
+                global_exception_handler --> user: 404 Not Found 응답
+                note right user: 에러 메시지: 해당 회원이 존재하지 않습니다.
+            else 유효한 회원 데이터
+                alt 요청 데이터에 닉네임 포함
+                    member_service -> member_query_repository: existsByNickname(nickname) 메소드 호출
+                    activate member_query_repository
+                    member_query_repository -> db: 닉네임과 일치하는 회원 존재 여부 조회
+                    db --> member_query_repository: 조회한 중복 여부 데이터 반환
+                    member_query_repository --> member_service: 닉네임 중복 여부 반환
+                    deactivate member_query_repository
+                    alt DB에 닉네임이 존재
+                        member_service -> global_exception_handler: NicknameConflictException 예외 발생
+                        global_exception_handler --> user: 409 Conflict 응답
+                        note right user: 에러 메시지: 중복된 닉네임을 사용할 수 없습니다.
+                    else DB에 닉네임이 존재하지 않음
+                        member_service -> member_service: 변경된 닉네임 설정
+                        member_service -> member_document_repository: get(memberId) 메소드 호출
+                        activate member_document_repository
+
+                        member_document_repository -> es: 회원 ID와 일치하는 문서 데이터 검색
+                        es --> member_document_repository: 회원 ID와 일치하는 문서 데이터 반환
+                        member_document_repository --> member_service: MemberDocument 객체 반환
+                        deactivate member_document_repository
+
+                        member_service -> member_document_repository: save(MemberDocument) 메소드 호출
+                        activate member_document_repository
+                        member_document_repository -> es: 변경된 닉네임을 문서에 반영
+                        deactivate member_document_repository
+                    end
+                else 요청 데이터에 사진 데이터 존재
+                    member_service -> photo_member_service: upload(member, photoData) 메소드 호출
+                    activate photo_member_service
+                    photo_member_service -> db: 새로운 사진 데이터 저장
+                    note right photo_member_service: 자세한 사항은 사진 업로드 API 시퀀스 다이어그램을 참고해주세요.
+                    photo_member_service --> member_service: 프로필 사진 업로드 데이터 반환
+                    deactivate photo_member_service
+                end
+
+                member_service --> member_controller: Modify DTO 객체 반환
+                note right of member_controller
+                    변경된 닉네임, 파일 UUID, 업로드 URL을 포함한 데이터DTO를 반환합니다.
+                end note
+                deactivate member_service
+
+                member_controller --> dispatcher_servlet: ResponseEntity<CommonResponse> 객체 반환
+                note right dispatcher_servlet: 성공 메시지와 데이터를 ResponseEntity로 감싸서 반환합니다.
+                deactivate member_controller
+
+                dispatcher_servlet --> user: 200 OK 응답
+                note right user: 성공 메시지: 내 프로필을 성공적으로 업데이트했습니다.
+                deactivate user
+            end
+        end
+    end
+end
+@enduml
