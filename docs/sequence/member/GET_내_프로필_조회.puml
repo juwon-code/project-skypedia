@@ -1,0 +1,95 @@
+@startuml
+autonumber
+
+title 내 프로필 조회 API 시퀀스 다이어그램
+
+actor User as user
+
+box "Presentation Layer"
+    participant "DispatcherServlet" as dispatcher_servlet
+    participant "MemberController" as member_controller
+end box
+
+box "Service Layer" #Pink
+    participant "MemberService" as member_service
+    participant "PhotoMemberService" as photo_member_service
+    participant "JwtTokenService" as jwt_token_service
+end box
+
+box "Utility Layer" #LightYellow
+    participant "SecurityUtil" as security_util
+end box
+
+box "Repository Layer" #LightGreen
+    participant "MemberQueryRepository" as member_query_repository
+    participant "MemberDocumentRepository" as member_document_repository
+end box
+
+box "Infrastructure Layer" #LightBlue
+    participant "GlobalExceptionHandler" as global_exception_handler
+    database "Database" as db
+end box
+
+group 내 프로필 조회
+    user -> dispatcher_servlet: "GET /api/v1/member" 요청
+    activate user
+    dispatcher_servlet -> member_controller: readMe() 메소드 실행
+    activate member_controller
+    member_controller -> member_service: getMyProfile() 메소드 호출
+    activate member_service
+
+    member_service -> security_util: getCurrentMemberId() 메소드 호출
+    note right member_service: 현재 로그인한 회원의 ID를 가져오는 메소드입니다.
+    activate security_util
+
+    alt 유효하지 않은 Authentication 객체
+        security_util -> global_exception_handler: NotAuthenticatedException 예외 발생
+        global_exception_handler --> user: 401 Unauthorized 응답
+        note right user: 에러 메시지: 해당 서비스를 사용하기 위해서는 로그인이 필요합니다.
+    else 유효한 Authentication 객체
+        security_util --> member_service: 회원 ID 반환
+        deactivate security_util
+        note right member_service: 회원 ID는 Authentication 객체의 Principal과 일치합니다.
+
+        member_service -> member_query_repository: findOneBy(searchOption) 메소드 호출
+        note right member_service: 회원 ID를 검색옵션으로 사용하여 데이터를 조회합니다.
+        activate member_query_repository
+        member_query_repository -> db: ID와 일치하는 회원 데이터 조회
+        db --> member_query_repository: 조회한 회원 데이터 반환
+        member_query_repository --> member_service: Member 객체 반환
+        deactivate member_query_repository
+        alt 유효하지 않은 회원 데이터
+            member_service -> global_exception_handler: MemberNotFoundException 예외 발생
+            global_exception_handler --> user: 404 Not Found 응답
+            note right user: 에러 메시지: 해당 회원이 존재하지 않습니다.
+        else 유효한 회원 데이터
+            alt 탈퇴한 회원
+                member_service -> global_exception_handler: AlreadyWithdrawnException 예외 발생
+                global_exception_handler --> user: 400 Bad Request 응답
+                note right user: 에러 메시지: 이미 탈퇴한 회원입니다.
+            else 탈퇴하지 않은 회원
+                member_service -> photo_member_service: getReadUrl(memberId) 메소드 호출
+                note right member_service: getReadUrl(memberId)를 호출하여 프로필 사진 URL을 가져옵니다.
+                activate photo_member_service
+                photo_member_service -> db: 회원 ID와 일치하는 사진 데이터 검색
+                note right photo_member_service: 자세한 사항은 사진 조회 API 시퀀스 다이어그램을 참고해주세요.
+                db --> photo_member_service: Photo 객체 반환
+                photo_member_service --> member_service: 프로필 사진 URL 반환
+                deactivate photo_member_service
+
+                member_service --> member_controller: Profile DTO 객체 반환
+                note right member_controller: 회원 정보와 프로필 사진 URL을 포함한 데이터를 반환합니다.
+                deactivate member_service
+
+                member_controller --> dispatcher_servlet: ResponseEntity<CommonResponse> 객체 반환
+                note right dispatcher_servlet: 성공 메시지와 데이터를 ResponseEntity로 감싸서 반환합니다.
+                deactivate member_controller
+
+                dispatcher_servlet --> user: 200 OK 응답
+                note right user: 성공 메시지: 내 프로필을 성공적으로 조회했습니다.
+                deactivate user
+            end
+        end
+    end
+end
+@enduml
